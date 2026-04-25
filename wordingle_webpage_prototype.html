@@ -328,14 +328,14 @@
       overflow: hidden;
       height: 100%;
       min-height: 0;
-      padding: 8px;
+      padding: 12px 10px;
       contain: layout;
     }
     .word-card {
       display: inline-flex;
       justify-content: center;
       align-items: center;
-      padding: 3px 4px;
+      padding: 4px 6px;
       background: transparent;
       border: 0;
       border-radius: 999px;
@@ -343,10 +343,11 @@
       user-select: none;
       transition: transform 180ms ease, opacity 180ms ease, filter 180ms ease;
       max-width: 100%;
-      flex: 0 0 auto;
+      flex: 0 1 auto;
       min-width: 0;
-      height: var(--word-height, 38px);
-      overflow: visible;
+      height: auto;
+      min-height: var(--word-height, 38px);
+      overflow: hidden;
     }
     .word-card:hover { transform: translateY(-1px); }
     .word-card:active { cursor: grabbing; }
@@ -361,19 +362,19 @@
       justify-content: center;
       box-sizing: border-box;
       width: max-content;
-      max-width: min(100%, calc(100vw - 18px));
-      min-width: calc((var(--word-chars, 5) * 0.74em) + 4.2em);
-      min-height: 2.45em;
-      padding: 0.62em 2.1em;
+      max-width: calc(100vw - 28px);
+      min-width: calc((var(--word-chars, 5) * 0.82em) + 5.4em);
+      min-height: 2.55em;
+      padding: 0.68em 2.6em;
       border-radius: 999px;
       border: 1px solid var(--tile-border);
       background: var(--panel-solid);
       color: var(--text);
-      letter-spacing: 0.05em;
-      font-size: var(--word-font, clamp(0.82rem, 2.3vw, 1.25rem));
+      letter-spacing: 0.04em;
+      font-size: var(--word-font, clamp(0.78rem, 2.15vw, 1.18rem));
       white-space: nowrap;
-      overflow: visible;
-      text-overflow: clip;
+      overflow: hidden;
+      text-overflow: ellipsis;
       box-shadow: 0 10px 22px rgba(0,0,0,0.05);
       line-height: 1.18;
     }
@@ -470,6 +471,7 @@
     .bank-fill { height:100%; width:var(--progress); border-radius:999px; background:linear-gradient(90deg, var(--primary), var(--primary-2)); }
 
     .celebration { position: fixed; inset: 0; pointer-events: none; display: grid; place-items: center; z-index: 625; opacity: 0; transition: opacity 220ms ease; }
+    .celebration.show .celebration-card { pointer-events: auto; }
     .celebration.show { opacity: 1; }
     .celebration-card {
       padding: 36px 42px;
@@ -495,6 +497,8 @@
       color: var(--muted);
       font-weight: 800;
     }
+    .celebration-actions { display: none; justify-content: center; gap: 10px; margin-top: 18px; }
+    .celebration.show.has-next .celebration-actions { display: flex; }
     
     @media (max-width: 1100px) {
       .app { grid-template-columns: 1fr; grid-template-rows: auto auto minmax(0, 1fr) minmax(120px, 26vh); }
@@ -516,7 +520,7 @@
         padding: 5px;
         gap: 5px;
         grid-template-columns: 1fr;
-        grid-template-rows: auto auto minmax(0, 1fr) minmax(130px, 30dvh);
+        grid-template-rows: auto auto minmax(0, 1fr) minmax(145px, 32dvh);
       }
       header, .panel { border-radius: 14px; padding: 7px; }
       header {
@@ -565,12 +569,12 @@
         min-height: 0;
         display: grid;
         grid-template-rows: auto minmax(0, 1fr);
-        padding: 7px 8px 8px;
+        padding: 5px 8px 8px;
       }
-      .side-right h2 { font-size: .78rem; margin-bottom: 4px; }
-      .word-list { padding: 8px 6px 10px; gap: var(--word-gap, 5px); align-content: center; }
-      .word-card { padding: 3px 5px; height: var(--word-height, 34px); }
-      .word-card strong { padding: .58em 1.75em; min-height: 2.35em; line-height: 1.16; max-width: calc(100vw - 28px); }
+      .side-right h2 { font-size: .76rem; margin-bottom: 2px; }
+      .word-list { padding: 12px 8px 12px; gap: var(--word-gap, 5px); align-content: center; justify-content: center; }
+      .word-card { padding: 3px 4px; min-height: var(--word-height, 34px); height: auto; }
+      .word-card strong { padding: .62em 2.15em; min-height: 2.45em; line-height: 1.16; max-width: calc(100vw - 32px); }
       .side-right h2:nth-of-type(2), .highscores { display: none; }
       .modal-backdrop { padding: 8px; place-items: center; }
       .modal {
@@ -788,6 +792,9 @@
     <div class="celebration-card">
       <strong id="celebrationTitle">Solved!</strong>
       <span id="celebrationSub">The grid gives up its secrets.</span>
+      <div class="celebration-actions">
+        <button class="btn success" id="nextChallengeBtn" type="button" data-i18n="nextChallenge">Continue to next stage</button>
+      </div>
     </div>
   </div>
 
@@ -821,7 +828,7 @@
   <script>
     const I18N = {
       en: {
-        language: "Language", english: "English", irish: "Gaeilge", play: "Play", playTitle: "Play Wordingle", playIntro: "Continue your challenge path, or unlock free play later.", settings: "Settings", settingsIntro: "Tune sound, ambience and effects.", soundToggle: "Sound", continueChallenge: "Continue challenge", freePlayLocked: "Free play unlocks after completing a challenge path.", playerName: "Player name", music: "Ambience", musicOff: "Off", musicKids: "Warm hum", musicSpace: "Deep space", musicTechno: "Low pulse", musicFocus: "Calm focus", musicClassical: "Soft resonance", musicFestive: "Winter glow", musicVolume: "Ambience volume", sfxVolume: "Effects volume", level: "Level", xp: "XP", runs: "Runs", profileTitle: "Player profile", profileIntro: "Your local progress and unlocks.", totalTime: "Total time", wordsSolved: "Words solved", wins: "Wins", bankProgress: "Word bank progress", resetConfirmOne: "Reset profile? This will remove XP, levels, stats and unlocks.", resetConfirmTwo: "Final confirmation: permanently delete this profile?", resetProfile: "Reset profile", unlocked: "Unlocked", lightMode: "Light mode", best: "Best", leaderboardHint: "View top 10", leaderboardTitle: "Leaderboard", topScoresFor: "Top scores for this setup", noConfigScore: "No score yet",
+        language: "Language", english: "English", irish: "Gaeilge", play: "Play", playTitle: "Play Wordingle", playIntro: "Continue your challenge path, or unlock free play later.", settings: "Settings", settingsIntro: "Tune sound, ambience and effects.", soundToggle: "Sound", continueChallenge: "Continue challenge", nextChallenge: "Continue to next stage", freePlayLocked: "Free play unlocks after completing a challenge path.", playerName: "Player name", music: "Ambience", musicOff: "Off", musicKids: "Warm hum", musicSpace: "Deep space", musicTechno: "Low pulse", musicFocus: "Calm focus", musicClassical: "Soft resonance", musicFestive: "Winter glow", musicVolume: "Ambience volume", sfxVolume: "Effects volume", level: "Level", xp: "XP", runs: "Runs", profileTitle: "Player profile", profileIntro: "Your local progress and unlocks.", totalTime: "Total time", wordsSolved: "Words solved", wins: "Wins", bankProgress: "Word bank progress", resetConfirmOne: "Reset profile? This will remove XP, levels, stats and unlocks.", resetConfirmTwo: "Final confirmation: permanently delete this profile?", resetProfile: "Reset profile", unlocked: "Unlocked", lightMode: "Light mode", best: "Best", leaderboardHint: "View top 10", leaderboardTitle: "Leaderboard", topScoresFor: "Top scores for this setup", noConfigScore: "No score yet",
         title: "Wordingle", tagline: "Find hidden words at your own pace.", playStyle: "Play style", freePlay: "Free play", challengePlay: "Challenge mode", audience: "Audience", child: "Child", adultAudience: "Adult", help: "Help", helpTitle: "How to play", helpText: "Drag a word onto the first tile where you think it starts. Direction is inferred from where you drag across the start tile. Reveal tools can uncover hidden letters. In challenge mode, Reshuffle rearranges unlocked tiles on a countdown. Found words are locked safely in place.", menace: "Reshuffle mode", menaceOff: "Off", menaceOn: "On", menaceEvent: "Reshuffle! The grid is changing.", reshuffleIn: "Reshuffle in", theme: "Dark mode", randomTheme: "Random theme", giveUp: "Give up", setup: "Setup", play: "Play",
         time: "Time", score: "Score", clues: "Clues", tools: "Tools", found: "Found", scoreHint: "Higher is better", clueHint: "Reveal hidden letters", foundHint: "Words solved",
         words: "Words", highScores: "High scores", setupTitle: "Set up Wordingle", setupIntro: "Choose the puzzle style. This locks in when the game starts.", close: "Close",
@@ -830,7 +837,7 @@
         messageStart: "Pick your setup and start when ready.", messagePlaying: "Game started. Drag a word onto its starting tile, or tap a word then swipe from the first tile on mobile.", swipeHint: "Swipe direction: {dir}" , messageClue: "Tap any hidden tile to reveal it.", noClues: "No clues left. Brave mode activated.", visible: "That tile is already visible. Choose a hidden one.", clueSpent: "Clue spent. A letter has surfaced.", foundWord: "Nice! {word} found. Ripple-tastic.", wrong: "Not there. Try another start tile or change direction.", drop: "Drop the word onto the first tile of its hidden path.", solved: "Solved!", solvedSub: "Every word found. Deliciously clever.", reveal: "Revealing!", revealSub: "No shame. The grid was being cheeky.", revealWatch: "Watch the correct answers reveal.", noScores: "No scores yet. Go make history.", wordPlaceholder: "Words will appear here after you start.", points: "pts base", hint: "Open setup, start a game, then drag a word onto the grid.", direction: "Direction set to {dir}. Drag a word onto the grid."
       },
       ga: {
-        language: "Teanga", english: "English", irish: "Gaeilge", play: "Imir", playTitle: "Imir Wordingle", playIntro: "Lean do chosán dúshláin, nó díghlasáil saor-imirt níos déanaí.", settings: "Socruithe", settingsIntro: "Socraigh fuaim, atmaisféar agus éifeachtaí.", soundToggle: "Fuaim", continueChallenge: "Lean den dúshlán", freePlayLocked: "Díghlasáiltear saor-imirt tar éis cosán dúshláin a chríochnú.", playerName: "Ainm imreora", music: "Atmaisféar", musicOff: "As", musicKids: "Crónán te", musicSpace: "Spás domhain", musicTechno: "Buille íseal", musicFocus: "Fócas ciúin", musicClassical: "Athshondas bog", musicFestive: "Lonrú geimhridh", musicVolume: "Airde atmaisféir", sfxVolume: "Airde éifeachtaí", level: "Leibhéal", xp: "XP", runs: "Babhtaí", profileTitle: "Próifíl imreora", profileIntro: "Do dhul chun cinn áitiúil.", totalTime: "Am iomlán", wordsSolved: "Focail réitithe", wins: "Buanna", bankProgress: "Dul chun cinn banc focal", resetConfirmOne: "Athshocraigh an phróifíl? Bainfear XP, leibhéil, staitisticí agus díghlasálacha.", resetConfirmTwo: "Deimhniú deireanach: scrios an phróifíl seo go buan?", resetProfile: "Athshocraigh", unlocked: "Díghlasáilte", lightMode: "Mód geal", best: "Is fearr", leaderboardHint: "Barr 10", leaderboardTitle: "Clár ceannais", topScoresFor: "Na scóir is fearr don socrú seo", noConfigScore: "Gan scór fós",
+        language: "Teanga", english: "English", irish: "Gaeilge", play: "Imir", playTitle: "Imir Wordingle", playIntro: "Lean do chosán dúshláin, nó díghlasáil saor-imirt níos déanaí.", settings: "Socruithe", settingsIntro: "Socraigh fuaim, atmaisféar agus éifeachtaí.", soundToggle: "Fuaim", continueChallenge: "Lean den dúshlán", nextChallenge: "Lean go dtí an chéad chéim eile", freePlayLocked: "Díghlasáiltear saor-imirt tar éis cosán dúshláin a chríochnú.", playerName: "Ainm imreora", music: "Atmaisféar", musicOff: "As", musicKids: "Crónán te", musicSpace: "Spás domhain", musicTechno: "Buille íseal", musicFocus: "Fócas ciúin", musicClassical: "Athshondas bog", musicFestive: "Lonrú geimhridh", musicVolume: "Airde atmaisféir", sfxVolume: "Airde éifeachtaí", level: "Leibhéal", xp: "XP", runs: "Babhtaí", profileTitle: "Próifíl imreora", profileIntro: "Do dhul chun cinn áitiúil.", totalTime: "Am iomlán", wordsSolved: "Focail réitithe", wins: "Buanna", bankProgress: "Dul chun cinn banc focal", resetConfirmOne: "Athshocraigh an phróifíl? Bainfear XP, leibhéil, staitisticí agus díghlasálacha.", resetConfirmTwo: "Deimhniú deireanach: scrios an phróifíl seo go buan?", resetProfile: "Athshocraigh", unlocked: "Díghlasáilte", lightMode: "Mód geal", best: "Is fearr", leaderboardHint: "Barr 10", leaderboardTitle: "Clár ceannais", topScoresFor: "Na scóir is fearr don socrú seo", noConfigScore: "Gan scór fós",
         title: "Wordingle", tagline: "Aimsigh focail fholaithe ar do shuaimhneas.", playStyle: "Stíl imeartha", freePlay: "Saor-imirt", challengePlay: "Dúshlán", audience: "Lucht imeartha", child: "Páiste", adultAudience: "Duine fásta", help: "Cabhair", helpTitle: "Conas imirt", helpText: "Tarraing focal chuig an gcéad tíl ina gceapann tú go dtosaíonn sé. Tuigtear an treo ón tarraingt. Is féidir le huirlisí litreacha folaithe a nochtadh. Sa mhodh dúshláin, athmheascann an ghreille tíleanna neamhghlasáilte ar chomhaireamh síos. Fanann focail aimsithe slán.", menace: "Athmheascadh", menaceOff: "As", menaceOn: "Ann", menaceEvent: "Athmheascadh! Tá an ghreille ag athrú.", reshuffleIn: "Athmheascadh i", theme: "Mód dorcha", randomTheme: "Téama randamach", giveUp: "Éirigh as", setup: "Socrú", play: "Imir",
         time: "Am", score: "Scór", clues: "Leideanna", tools: "Uirlisí", found: "Aimsithe", scoreHint: "Is fearr níos airde", clueHint: "Nocht litreacha", foundHint: "Focail réitithe",
         words: "Focail", highScores: "Scóir arda", setupTitle: "Socraigh Wordingle", setupIntro: "Roghnaigh stíl an phuzail. Glasálfar í nuair a thosaíonn an cluiche.", close: "Dún",
@@ -855,10 +862,10 @@
 
     const DIFFICULTY = {
       foundation: { hidden: 0, clues: 0, multiplier: 0.75, noClues: true },
-      easy: { hidden: 0.12, clues: 0, multiplier: 1 },
-      normal: { hidden: 0.18, clues: 0, multiplier: 1.25 },
-      hard: { hidden: 0.24, clues: 0, multiplier: 1.6 },
-      expert: { hidden: 0.3, clues: 0, multiplier: 2.1 }
+      easy: { hidden: 0.25, clues: 0, multiplier: 1 },
+      normal: { hidden: 0.3, clues: 0, multiplier: 1.25 },
+      hard: { hidden: 0.35, clues: 0, multiplier: 1.6 },
+      expert: { hidden: 0.42, clues: 0, multiplier: 2.1 }
     };
 
     const THEMES = [
@@ -1006,6 +1013,7 @@
     const celebration = document.getElementById("celebration");
     const celebrationTitle = document.getElementById("celebrationTitle");
     const celebrationSub = document.getElementById("celebrationSub");
+    const nextChallengeBtn = document.getElementById("nextChallengeBtn");
     const setupModal = document.getElementById("setupModal");
     const setupModalCard = document.getElementById("setupModalCard");
     const profileModal = document.getElementById("profileModal");
@@ -1740,11 +1748,12 @@
       const gap = isDesktopSidePanel ? 7 : 5;
       const columns = isDesktopSidePanel ? 1 : Math.max(1, Math.ceil(Math.sqrt(count * Math.max(0.8, box.width / Math.max(1, box.height)))));
       const rows = Math.ceil(count / columns);
-      const cardHeight = Math.max(24, Math.floor((Math.max(60, box.height - 16) - gap * Math.max(0, rows - 1)) / rows));
+      const usableHeight = Math.max(72, box.height - 26);
+      const cardHeight = Math.max(30, Math.floor((usableHeight - gap * Math.max(0, rows - 1)) / rows));
       const basis = "auto";
-      const fontByHeight = cardHeight * 0.38;
-      const fontByWidth = (box.width / Math.max(1, columns)) / Math.max(7.2, longest * 1.08 + 4.4);
-      const fontSize = Math.max(9, Math.min(24, Math.floor(Math.min(fontByHeight, fontByWidth))));
+      const fontByHeight = cardHeight * 0.32;
+      const fontByWidth = (box.width / Math.max(1, columns)) / Math.max(8.8, longest * 1.22 + 5.6);
+      const fontSize = Math.max(8, Math.min(22, Math.floor(Math.min(fontByHeight, fontByWidth))));
       wordListEl.style.setProperty("--word-gap", gap + "px");
       wordListEl.style.setProperty("--word-basis", basis);
       wordListEl.style.setProperty("--word-height", cardHeight + "px");
@@ -2173,14 +2182,14 @@
         awardProgress(true);
 
         giveUpBtn.disabled = true;
+        const completedSetup = { ...state.lockedSetup };
         state.lockedSetup = null;
         updateSetupSummary();
 
         state.musicIntensity = 1;
 
         // Celebration stays active until new game
-        showCelebration("Victory!", `Score: ${state.score} | XP: +${xpForRun(true)} | Level: ${state.profile.level}`, false);
-        setTimeout(() => openProfile(false), 750);
+        showCelebration("Victory!", `Score: ${state.score} | XP earned | Level ${state.profile.level}`, false, completedSetup.playStyle === "challenge");
 
         // Continuous fireworks loop
         const fireworkLoop = () => {
@@ -2203,9 +2212,10 @@
       renderStats();
     }
 
-    function showCelebration(title, sub, autoHide = true) {
+    function showCelebration(title, sub, autoHide = true, hasNext = false) {
       celebrationTitle.textContent = title;
       celebrationSub.textContent = sub;
+      celebration.classList.toggle("has-next", Boolean(hasNext));
       celebration.classList.add("show");
       if (autoHide) setTimeout(() => celebration.classList.remove("show"), 1450);
     }
@@ -2440,6 +2450,12 @@
     });
     startGameBtn.addEventListener("click", newGame);
     continueChallengeBtn.addEventListener("click", () => { playStyleSelect.value = "challenge"; newGame(); });
+    nextChallengeBtn.addEventListener("click", () => {
+      celebration.classList.remove("show", "has-next");
+      playStyleSelect.value = "challenge";
+      document.body.classList.add("challenge-aesthetic");
+      newGame();
+    });
     freePlayBtn.addEventListener("click", () => {
       if (!freePlayUnlocked()) return setMessage(t("freePlayLocked"));
       playStyleSelect.value = "free";
@@ -2590,7 +2606,7 @@
       console.assert(typeof burstConfettiFromTile === "function", "Confetti function should be defined");
       console.assert(DIRECTIONS.length === 4, "Expected four supported directions");
       console.assert(DIFFICULTY.foundation.hidden === 0, "Foundation difficulty should show all letters");
-      console.assert(DIFFICULTY.normal.hidden <= 0.2, "Normal difficulty should hide a comfortable number of word letters");
+      console.assert(DIFFICULTY.easy.hidden >= 0.25, "Non-foundation difficulties should hide at least 25% of word letters");
       console.assert(isModeUnlocked("kids") === true, "Kids mode should always be unlocked");
       console.assert(typeof doMenaceShuffle === "function", "Menace shuffle should be available");
       console.assert("menaceInProgress" in state, "Menace mode should expose an in-progress lock");
