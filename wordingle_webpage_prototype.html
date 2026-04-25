@@ -335,7 +335,7 @@
       display: inline-flex;
       justify-content: center;
       align-items: center;
-      padding: 4px 6px;
+      padding: 2px 3px;
       background: transparent;
       border: 0;
       border-radius: 999px;
@@ -346,8 +346,7 @@
       flex: 0 1 auto;
       min-width: 0;
       height: auto;
-      min-height: var(--word-height, 38px);
-      overflow: hidden;
+      overflow: visible;
     }
     .word-card:hover { transform: translateY(-1px); }
     .word-card:active { cursor: grabbing; }
@@ -361,22 +360,22 @@
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
-      width: max-content;
-      max-width: calc(100vw - 28px);
-      min-width: calc((var(--word-chars, 5) * 0.82em) + 5.4em);
-      min-height: 2.55em;
-      padding: 0.68em 2.6em;
+      width: auto;
+      max-width: 100%;
+      min-width: 0;
+      min-height: 2.25em;
+      padding: 0.55em 1.65em;
       border-radius: 999px;
       border: 1px solid var(--tile-border);
       background: var(--panel-solid);
       color: var(--text);
       letter-spacing: 0.04em;
-      font-size: var(--word-font, clamp(0.78rem, 2.15vw, 1.18rem));
+      font-size: var(--word-font, 16px);
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      overflow: visible;
+      text-overflow: clip;
       box-shadow: 0 10px 22px rgba(0,0,0,0.05);
-      line-height: 1.18;
+      line-height: 1.15;
     }
     .word-card small { display: none; }
     @keyframes wordFound { 0% { transform: scale(1); } 45% { transform: scale(1.08); } 100% { transform: scale(.96); } }
@@ -404,6 +403,9 @@
     #profileModal { z-index: 650; }
     #profileModal .modal { background: var(--panel-solid); }
     .modal-backdrop.show { display: grid; }
+    #confirmModal { z-index: 760; }
+    #confirmModal .modal { width: min(460px, 100%); background: var(--panel-solid); }
+    .confirm-icon { width: 54px; height: 54px; border-radius: 18px; display: grid; place-items: center; margin-bottom: 12px; background: color-mix(in srgb, var(--danger) 14%, var(--panel-solid)); color: var(--danger); font-size: 1.7rem; font-weight: 1000; }
     .modal {
       width: min(680px, 100%);
       max-height: calc(100dvh - 28px);
@@ -572,9 +574,9 @@
         padding: 5px 8px 8px;
       }
       .side-right h2 { font-size: .76rem; margin-bottom: 2px; }
-      .word-list { padding: 12px 8px 12px; gap: var(--word-gap, 5px); align-content: center; justify-content: center; }
-      .word-card { padding: 3px 4px; min-height: var(--word-height, 34px); height: auto; }
-      .word-card strong { padding: .62em 2.15em; min-height: 2.45em; line-height: 1.16; max-width: calc(100vw - 32px); }
+      .word-list { padding: 10px 8px 12px; gap: var(--word-gap, 5px); align-content: center; justify-content: center; }
+      .word-card { padding: 2px 3px; height: auto; }
+      .word-card strong { padding: .52em 1.45em; min-height: 2.2em; line-height: 1.14; max-width: calc(100vw - 32px); }
       .side-right h2:nth-of-type(2), .highscores { display: none; }
       .modal-backdrop { padding: 8px; place-items: center; }
       .modal {
@@ -771,6 +773,22 @@
         <label><span data-i18n="sfxVolume">Effects volume</span>
           <input type="range" id="sfxVolumeSlider" min="0" max="100" value="75" />
         </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="confirmModal">
+    <div class="modal">
+      <div class="confirm-icon" id="confirmIcon">!</div>
+      <div class="modal-head">
+        <div>
+          <h2 id="confirmTitle">Are you sure?</h2>
+          <p id="confirmMessage">This action cannot be undone.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" id="confirmCancelBtn" type="button">Cancel</button>
+        <button class="btn danger" id="confirmOkBtn" type="button">Confirm</button>
       </div>
     </div>
   </div>
@@ -1005,6 +1023,12 @@
     const challengeModeBtn = document.getElementById("challengeModeBtn");
     const helpModal = document.getElementById("helpModal");
     const leaderboardModal = document.getElementById("leaderboardModal");
+    const confirmModal = document.getElementById("confirmModal");
+    const confirmTitle = document.getElementById("confirmTitle");
+    const confirmMessage = document.getElementById("confirmMessage");
+    const confirmIcon = document.getElementById("confirmIcon");
+    const confirmCancelBtn = document.getElementById("confirmCancelBtn");
+    const confirmOkBtn = document.getElementById("confirmOkBtn");
     const leaderboardList = document.getElementById("leaderboardList");
     const leaderboardSub = document.getElementById("leaderboardSub");
     const setupBtn = document.getElementById("setupBtn");
@@ -1510,6 +1534,36 @@
       fireworkLoopId = null;
     }
 
+    function askConfirm({ title, message, okText, cancelText, icon = "!", danger = true }) {
+      return new Promise(resolve => {
+        confirmTitle.textContent = title;
+        confirmMessage.textContent = message;
+        confirmIcon.textContent = icon;
+        confirmOkBtn.textContent = okText || "Confirm";
+        confirmCancelBtn.textContent = cancelText || t("close");
+        confirmOkBtn.className = danger ? "btn danger" : "btn success";
+        confirmModal.classList.add("show");
+
+        const cleanup = result => {
+          confirmModal.classList.remove("show");
+          confirmOkBtn.removeEventListener("click", onOk);
+          confirmCancelBtn.removeEventListener("click", onCancel);
+          confirmModal.removeEventListener("click", onBackdrop);
+          document.removeEventListener("keydown", onKey);
+          resolve(result);
+        };
+        const onOk = () => cleanup(true);
+        const onCancel = () => cleanup(false);
+        const onBackdrop = e => { if (e.target === confirmModal) cleanup(false); };
+        const onKey = e => { if (e.key === "Escape") cleanup(false); };
+
+        confirmOkBtn.addEventListener("click", onOk);
+        confirmCancelBtn.addEventListener("click", onCancel);
+        confirmModal.addEventListener("click", onBackdrop);
+        document.addEventListener("keydown", onKey);
+      });
+    }
+
     function openProfile(auto = false) {
       renderProfile();
       profileModal.classList.add("show");
@@ -1741,23 +1795,56 @@
 
     function fitWordPills() {
       if (!state.words.length) return;
-      const box = wordListEl.getBoundingClientRect();
-      const count = Math.max(1, state.words.length);
-      const longest = Math.max(...state.words.map(w => w.word.length), 4);
+
+      const list = wordListEl;
+      const cards = [...list.querySelectorAll(".word-card")];
+      if (!cards.length) return;
+
+      const box = list.getBoundingClientRect();
+      if (box.width < 20 || box.height < 20) return;
+
       const isDesktopSidePanel = window.matchMedia("(min-width: 1101px)").matches;
       const gap = isDesktopSidePanel ? 7 : 5;
-      const columns = isDesktopSidePanel ? 1 : Math.max(1, Math.ceil(Math.sqrt(count * Math.max(0.8, box.width / Math.max(1, box.height)))));
-      const rows = Math.ceil(count / columns);
-      const usableHeight = Math.max(72, box.height - 26);
-      const cardHeight = Math.max(30, Math.floor((usableHeight - gap * Math.max(0, rows - 1)) / rows));
-      const basis = "auto";
-      const fontByHeight = cardHeight * 0.32;
-      const fontByWidth = (box.width / Math.max(1, columns)) / Math.max(8.8, longest * 1.22 + 5.6);
-      const fontSize = Math.max(8, Math.min(22, Math.floor(Math.min(fontByHeight, fontByWidth))));
-      wordListEl.style.setProperty("--word-gap", gap + "px");
-      wordListEl.style.setProperty("--word-basis", basis);
-      wordListEl.style.setProperty("--word-height", cardHeight + "px");
-      wordListEl.style.setProperty("--word-font", fontSize + "px");
+      const minFont = 8;
+      const maxFont = isDesktopSidePanel ? 34 : 28;
+
+      list.style.setProperty("--word-gap", gap + "px");
+      list.style.removeProperty("--word-height");
+      list.style.removeProperty("--word-basis");
+
+      // Measure the real rendered layout, rather than guessing columns/rows from word count.
+      // This lets short words grow large while long words still force the whole set to fit.
+      const fitsAt = fontSize => {
+        list.style.setProperty("--word-font", fontSize + "px");
+
+        // Force layout before measuring.
+        void list.offsetWidth;
+
+        const listFits = list.scrollWidth <= list.clientWidth + 1 && list.scrollHeight <= list.clientHeight + 1;
+        const pillsFit = cards.every(card => {
+          const pill = card.querySelector("strong");
+          if (!pill) return true;
+          return pill.scrollWidth <= pill.clientWidth + 1 && pill.scrollHeight <= pill.clientHeight + 1;
+        });
+        return listFits && pillsFit;
+      };
+
+      let low = minFont;
+      let high = maxFont;
+      let best = minFont;
+
+      for (let i = 0; i < 9; i++) {
+        const mid = (low + high) / 2;
+        if (fitsAt(mid)) {
+          best = mid;
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+
+      // Final tiny safety margin avoids iOS/Safari fractional-pixel clipping.
+      list.style.setProperty("--word-font", Math.max(minFont, best - 0.35).toFixed(2) + "px");
     }
 
     function renderStats() {
@@ -2438,9 +2525,23 @@
     currentUserChip.addEventListener("click", () => openProfile(false));
     closeProfileBtn.addEventListener("click", () => profileModal.classList.remove("show"));
     profileCloseBottomBtn.addEventListener("click", () => profileModal.classList.remove("show"));
-    profileResetBtn.addEventListener("click", () => {
-      if (!confirm(t("resetConfirmOne"))) return;
-      if (!confirm(t("resetConfirmTwo"))) return;
+    profileResetBtn.addEventListener("click", async () => {
+      const first = await askConfirm({
+        title: t("resetProfile"),
+        message: t("resetConfirmOne"),
+        okText: t("resetProfile"),
+        cancelText: t("close"),
+        icon: "⚠️"
+      });
+      if (!first) return;
+      const second = await askConfirm({
+        title: state.lang === "ga" ? "Deimhniú deireanach" : "Final confirmation",
+        message: t("resetConfirmTwo"),
+        okText: state.lang === "ga" ? "Scrios" : "Delete profile",
+        cancelText: t("close"),
+        icon: "🗑️"
+      });
+      if (!second) return;
       state.profile = { ...DEFAULT_PROFILE, logo: generateLogo("Player") };
       playerNameInput.value = state.profile.name;
       localStorage.setItem("wordingleProfile", JSON.stringify(state.profile));
@@ -2475,8 +2576,15 @@
     settingsBtn.addEventListener("click", () => settingsModal.classList.add("show"));
     document.getElementById("closeSettingsBtn").addEventListener("click", () => settingsModal.classList.remove("show"));
     settingsSoundBtn.addEventListener("click", () => soundBtn.click());
-    giveUpBtn.addEventListener("click", () => {
-      if (!confirm(state.lang === "ga" ? "An bhfuil tú cinnte gur mhaith leat éirí as agus na freagraí a nochtadh?" : "Give up and reveal the answers?")) return;
+    giveUpBtn.addEventListener("click", async () => {
+      const ok = await askConfirm({
+        title: state.lang === "ga" ? "Éirigh as?" : "Give up?",
+        message: state.lang === "ga" ? "Nochtfar na freagraí agus críochnófar an babhta seo." : "This will reveal the answers and end the current round.",
+        okText: t("giveUp"),
+        cancelText: t("close"),
+        icon: "👀"
+      });
+      if (!ok) return;
       endGame(t("reveal"), t("revealSub"), false);
     });
     document.getElementById("themeBtn").addEventListener("click", () => {
@@ -2618,6 +2726,7 @@
       console.assert(typeof haptic === "function", "Haptic helper should exist");
       console.assert(typeof directionFromSwipe === "function", "Swipe direction helper should exist");
       console.assert(typeof previewSwipePath === "function", "Swipe preview helper should exist");
+      console.assert(typeof askConfirm === "function", "Custom confirm modal should exist");
       const originalGrid = gridSizeSelect.value;
       const originalCount = wordCountSelect.value;
       gridSizeSelect.value = "20";
