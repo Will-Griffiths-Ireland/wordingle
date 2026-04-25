@@ -45,12 +45,14 @@
     html, body {
       width: 100%;
       height: 100%;
+      min-height: 100%;
       overflow: hidden;
     }
 
     body {
       margin: 0;
       height: 100vh;
+      height: 100dvh;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
         radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 28%, transparent), transparent 32rem),
@@ -67,6 +69,7 @@
     .app {
       width: min(1500px, 100%);
       height: 100vh;
+      height: 100dvh;
       margin: 0 auto;
       padding: clamp(8px, 1.2vw, 14px);
       display: grid;
@@ -392,6 +395,10 @@
     .modal-backdrop.show { display: grid; }
     .modal {
       width: min(680px, 100%);
+      max-height: calc(100dvh - 28px);
+      overflow: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       background: var(--panel);
       border: 1px solid var(--tile-border);
       border-radius: 30px;
@@ -485,22 +492,88 @@
       .mobile-controls { display: grid; }
     }
     @media (max-width: 620px) {
-      .app { padding: 8px; gap: 7px; grid-template-rows: auto auto minmax(0, 1fr) minmax(105px, 24vh); }
-      header, .panel { border-radius: 16px; padding: 8px; }
-      .brand { gap: 8px; }
-      .logo { width: 34px; height: 34px; border-radius: 12px; }
+      html, body { height: 100dvh; max-height: 100dvh; overflow: hidden; }
+      body { position: fixed; inset: 0; width: 100%; }
+      .app {
+        height: 100dvh;
+        max-height: 100dvh;
+        padding: 6px;
+        gap: 6px;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto minmax(0, 1fr) clamp(92px, 22dvh, 132px);
+      }
+      header, .panel { border-radius: 14px; padding: 7px; }
+      header {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+      .brand { gap: 7px; min-height: 0; }
+      .logo { width: 30px; height: 30px; border-radius: 10px; font-size: .9rem; }
+      h1 { font-size: 1.08rem; }
       .tagline { display: none; }
-      .stats-top { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-      .stat { padding: 6px 7px; }
-      .stat strong { font-size: 0.98rem; }
-      .stat small { display: none; }
-      .btn { padding: 7px 9px; font-size: 0.78rem; }
-      .icon-btn { width: 34px; height: 34px; padding: 0; }
-      .user-chip { font-size: 0.74rem; padding: 7px 8px; }
+      .top-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 5px;
+        overflow: hidden;
+      }
+      .top-actions .btn { min-width: 0; }
+      .user-chip {
+        grid-column: span 2;
+        justify-content: center;
+        font-size: 0.68rem;
+        padding: 6px 6px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
       .user-chip small { display: none; }
-      .modal-grid { grid-template-columns: 1fr; }
-      .is-free-hidden { display: none; }
+      .btn { padding: 6px 7px; font-size: 0.72rem; }
+      .icon-btn { width: 30px; height: 30px; padding: 0; font-size: .9rem; }
+      #helpBtn { font-size: 0; }
+      #helpBtn::before { content: "?"; font-size: .85rem; }
+      #giveUpBtn { font-size: 0; }
+      #giveUpBtn::before { content: "✕"; font-size: .85rem; }
+      #setupBtn { font-size: 0; }
+      #setupBtn::before { content: "▶"; font-size: .85rem; }
+      .stats-top { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+      .stat { padding: 5px 6px; border-radius: 12px; }
+      .stat span { font-size: 0.56rem; }
+      .stat strong { font-size: 0.86rem; margin-top: 1px; }
+      .stat small { display: none; }
+      .game-shell { min-height: 0; overflow: hidden; }
+      .grid-wrap { padding: 5px; border-radius: 16px; }
+      .side-right {
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        padding: 7px;
+      }
+      .side-right h2 { font-size: .78rem; margin-bottom: 4px; }
+      .word-list { padding: 4px; gap: var(--word-gap, 4px); align-content: center; }
+      .word-card strong { padding: .25em .58em; }
       .side-right h2:nth-of-type(2), .highscores { display: none; }
+      .modal-backdrop { padding: 8px; place-items: center; }
+      .modal {
+        width: 100%;
+        max-height: calc(100dvh - 16px);
+        border-radius: 20px;
+        padding: 14px;
+      }
+      .modal-head { margin-bottom: 12px; gap: 8px; }
+      .modal-head h2 { font-size: 1.22rem; }
+      .modal-head p { font-size: .82rem; }
+      .modal-grid { grid-template-columns: 1fr; gap: 10px; }
+      .audio-options { grid-template-columns: 1fr; gap: 10px; }
+      .profile-strip { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+      .profile-tile { padding: 7px; }
+      .challenge-level { grid-template-columns: auto minmax(0,1fr) auto; gap: 7px; padding: 7px; }
+      .challenge-meta { font-size: .66rem; }
+      .challenge-badge { width: 24px; height: 24px; font-size: .72rem; }
+      .profile-logo { width: 78px; height: 78px; border-radius: 24px; font-size: 1.6rem; }
+      .celebration-card { padding: 22px 24px; border-radius: 24px; max-width: calc(100vw - 24px); }
+      .is-free-hidden { display: none; }
     }
   </style>
 </head>
