@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wordingle</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: rgba(255, 255, 255, 0.84);
+      --panel-solid: #ffffff;
+      --text: #18202f;
+      --muted: #6e7687;
+      --primary: #7067ff;
+      --primary-2: #00c2a8;
+      --danger: #ff5f7a;
+      --challenge-primary: #5b6cff;
+      --challenge-secondary: #00d4b8;
+      --challenge-warn: #ffd166;
+      --warn: #ffb84d;
+      --tile: #ffffff;
+      --tile-hidden: #dfe3ef;
+      --tile-border: rgba(20, 30, 50, 0.18);
+      --shadow: 0 18px 45px rgba(23, 32, 56, 0.12);
+      --radius: 24px;
+      --ripple: rgba(112, 103, 255, 0.42);
+      --tile-success-bg: linear-gradient(135deg, var(--warn), var(--primary));
+      --tile-success-text: #ffffff;
+    }
+
+    body.dark {
+      --bg: #0e1220;
+      --panel: rgba(24, 29, 48, 0.78);
+      --panel-solid: #171c2f;
+      --text: #eef2ff;
+      --muted: #9aa6c3;
+      --tile: #252c45;
+      --tile-hidden: #151a2c;
+      --tile-border: rgba(255, 255, 255, 0.18);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 28%, transparent), transparent 32rem),
+        radial-gradient(circle at bottom right, color-mix(in srgb, var(--primary-2) 24%, transparent), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      transition: background 250ms ease, color 250ms ease;
+    }
+    body.shake-soft .app { animation: shakeSoft 260ms ease both; }
+    body.slowmo .grid-wrap { animation: premiumGlow 520ms ease both; }
+
+    button, select, input { font: inherit; }
+
+    .app {
+      width: min(1500px, 100%);
+      height: 100vh;
+      margin: 0 auto;
+      padding: clamp(8px, 1.2vw, 14px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) clamp(280px, 24vw, 380px);
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: clamp(8px, 1vw, 12px);
+      overflow: hidden;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--tile-border);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      z-index: 20;
+      min-height: 0;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+    .logo {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: white;
+      font-weight: 900;
+      font-size: 1.05rem;
+      box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 30%, transparent);
+      flex: 0 0 auto;
+    }
+
+    h1, h2, p { margin: 0; }
+    h1 { font-size: clamp(1.25rem, 2vw, 1.65rem); letter-spacing: -0.05em; line-height: 1; white-space: nowrap; }
+    .tagline { margin-top: 3px; color: var(--muted); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42vw; }
+    .top-actions { display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 6px; min-width: 0; }
+    .user-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 11px; border-radius: 999px; background: var(--panel-solid); border: 1px solid var(--tile-border); color: var(--text); font-size: 0.82rem; font-weight: 900; white-space: nowrap; }
+    .user-chip small { color: var(--muted); font-size: 0.72rem; font-weight: 800; }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 11px;
+      color: white;
+      background: linear-gradient(135deg, var(--primary), #a36bff);
+      cursor: pointer;
+      font-weight: 800;
+      box-shadow: 0 12px 25px color-mix(in srgb, var(--primary) 26%, transparent);
+      transition: transform 140ms ease, opacity 140ms ease;
+      user-select: none;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(1px) scale(0.98); }
+    .btn.secondary { background: var(--panel-solid); color: var(--text); border: 1px solid var(--tile-border); box-shadow: none; }
+    .btn.success { background: linear-gradient(135deg, var(--primary-2), #6ee7b7); }
+    .challenge-aesthetic { --primary: var(--challenge-primary); --primary-2: var(--challenge-secondary); --warn: var(--challenge-warn); }
+    .btn.danger { background: linear-gradient(135deg, var(--danger), #ff9ab0); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .icon-btn { width: 38px; height: 38px; padding: 0; display: inline-grid; place-items: center; font-size: 1.05rem; line-height: 1; flex: 0 0 auto; }
+
+    .panel {
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--tile-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 10px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel h2 { font-size: 0.95rem; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .stack { display: grid; gap: 14px; }
+
+    label { display: grid; gap: 7px; color: var(--muted); font-size: 0.86rem; font-weight: 700; }
+    select, input[type="text"], input:not([type]) { width: 100%; border: 1px solid var(--tile-border); background: var(--panel-solid); color: var(--text); border-radius: 14px; padding: 11px 12px; outline: none; }
+    input::placeholder { color: var(--muted); }
+    select:focus, input:focus { border-color: color-mix(in srgb, var(--primary) 60%, var(--tile-border)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent); }
+
+    .stats-top {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(90px, 1fr));
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .stat {
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--tile-border);
+      border-radius: 16px;
+      padding: 8px 10px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .stat span { display: block; color: var(--muted); font-size: 0.66rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat strong { display: block; margin-top: 2px; font-size: 1.15rem; letter-spacing: -0.05em; }
+    .stat small { display: block; margin-top: 1px; color: var(--muted); font-weight: 700; font-size: 0.62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .setup-chip { display: none; }
+
+    .game-shell { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); gap: 0; align-content: stretch; overflow: hidden; }
+    
+    .grid-wrap {
+      overflow: hidden;
+      max-height: none;
+      height: 100%;
+      padding: 8px;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04));
+      border: 1px solid var(--tile-border);
+      position: relative;
+    }
+
+    .letter-grid { display: grid; grid-template-columns: repeat(var(--cols), var(--tile-size)); gap: var(--gap); width: max-content; height: max-content; margin: auto; touch-action: none; transform-origin: center; }
+    .tile.reshuffle-out { animation: tileReshuffleOut 360ms cubic-bezier(.3,0,.2,1) forwards; animation-delay: var(--shuffle-delay, 0ms); }
+    .tile.reshuffle-in { animation: tileReshuffleIn 420ms cubic-bezier(.16,1,.3,1) both; animation-delay: var(--shuffle-delay, 0ms); }
+    @keyframes tileReshuffleOut { 0% { opacity: 1; transform: scale(1); filter: blur(0); } 100% { opacity: 0; transform: scale(0); filter: blur(5px); } }
+    @keyframes tileReshuffleIn { 0% { opacity: 0; transform: scale(0); filter: blur(5px); } 78% { opacity: 1; transform: scale(1.035); filter: blur(0); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
+
+    .tile {
+      width: var(--tile-size);
+      height: var(--tile-size);
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--tile);
+      border: 2px solid var(--tile-border);
+      color: var(--text);
+      font-weight: 900;
+      font-size: calc(var(--tile-size) * 0.42);
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+      transition: transform 120ms ease, background 150ms ease, color 150ms ease, outline 150ms ease;
+      user-select: none;
+      transform-style: preserve-3d;
+      perspective: 800px;
+      position: relative;
+      overflow: visible;
+    }
+    .tile-face { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; backface-visibility: hidden; transform-style: preserve-3d; }
+
+    .tile.hidden {
+      color: transparent;
+      background:
+        radial-gradient(circle at 34% 30%, rgba(255,255,255,0.55), transparent 0.45rem),
+        linear-gradient(135deg, var(--tile-hidden), color-mix(in srgb, var(--primary) 14%, transparent));
+    }
+    .tile.revealed { animation: pop 220ms ease; }
+    .tile.found { background: var(--tile-success-bg); color: var(--tile-success-text); transform: scale(0.96); }
+    .tile.preview { outline: 4px solid var(--warn); outline-offset: 1px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--warn) 18%, transparent); }
+    .tile.solution { animation: letterEmphasis 840ms cubic-bezier(.18,.9,.18,1) both; background: var(--tile-success-bg); color: var(--tile-success-text); z-index: 3; }
+    .tile.burst { animation: successPulse 600ms ease both; z-index: 3; }
+    .tile.burst::before, .tile.burst::after, .tile.solution::before, .tile.solution::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--ripple);
+      animation: ripple 720ms ease-out both;
+      pointer-events: none;
+    }
+    .tile.burst::after, .tile.solution::after { animation-delay: 120ms; border-color: color-mix(in srgb, var(--primary-2) 58%, transparent); }
+
+    @keyframes pop { from { transform: scale(0.6); } 70% { transform: scale(1.13); } to { transform: scale(1); } }
+    @keyframes letterEmphasis { 0% { transform: scale(0.72); filter: brightness(1); } 45% { transform: scale(1.75); filter: brightness(1.65); } 70% { transform: scale(1.28); filter: brightness(1.25); } 100% { transform: scale(1); filter: brightness(1); } }
+    @keyframes flyWord { 0% { transform: translateX(0) scale(1); opacity: 1; } 45% { transform: translateX(-35px) scale(1.08); opacity: 1; } 100% { transform: translateX(140px) scale(0.82); opacity: 0.2; } }
+    @keyframes ripple { 0% { transform: scale(0.65); opacity: 0.85; } 100% { transform: scale(2.15); opacity: 0; } }
+    @keyframes successPulse { 0% { transform: scale(0.88); } 55% { transform: scale(1.22); } 100% { transform: scale(0.98); } }
+    @keyframes wordVanish { 0% { opacity: 1; transform: scale(1); filter: blur(0); } 65% { opacity: .9; transform: scale(1.08); filter: blur(0); } 100% { opacity: 0; transform: scale(.65) translateY(-8px); filter: blur(5px); } }
+    @keyframes confettiPop { 0% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(.25) rotate(var(--rot)); } }
+    @keyframes fireworkSpark { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(.15); } }
+    @keyframes victoryTileDance { 0% { transform: translate(0,0) rotate(0deg) scale(1); } 35% { transform: translate(var(--vx), var(--vy)) rotate(var(--vr)) scale(1.18); } 70% { transform: translate(calc(var(--vx) * -0.45), calc(var(--vy) * .55)) rotate(calc(var(--vr) * -0.55)) scale(.96); } 100% { transform: translate(0,0) rotate(0deg) scale(1); } }
+    @keyframes shakeSoft { 0%, 100% { transform: translate3d(0,0,0); } 20% { transform: translate3d(-5px, 2px, 0); } 40% { transform: translate3d(5px, -2px, 0); } 60% { transform: translate3d(-3px, 1px, 0); } 80% { transform: translate3d(3px, 0, 0); } }
+    @keyframes premiumGlow { 0% { filter: brightness(1); } 50% { filter: brightness(1.18) saturate(1.18); } 100% { filter: brightness(1); } }
+    .word-card.vanish { animation: wordVanish 420ms ease forwards; pointer-events: none; }
+    .confetti-piece, .firework-spark {
+      position: fixed;
+      pointer-events: none;
+      z-index: 300;
+      width: clamp(18px, 3.5vw, 54px);
+      height: clamp(18px, 3.5vw, 54px);
+      border-radius: 3px;
+      background: var(--primary);
+      animation: confettiPop 900ms ease-out forwards;
+    }
+    .firework-spark {
+      left: var(--x);
+      top: var(--y);
+      width: clamp(16px, 2.5vw, 42px);
+      height: clamp(16px, 2.5vw, 42px);
+      border-radius: 999px;
+      background: var(--primary-2);
+      animation: fireworkSpark 1200ms ease-out forwards;
+    }
+        .tile.victory-dance { animation: victoryTileDance 1200ms ease-in-out both; }
+
+    .tools-header { display: none !important; }
+    .tools-header.has-tools { display: none !important; }
+    .tool-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; }
+    .tool-card { display: inline-flex; align-items: center; justify-content: center; min-width: 54px; height: 34px; padding: 0 10px; border-radius: 999px; background: linear-gradient(135deg, var(--warn), var(--primary)); color: white; border: 0; box-shadow: 0 12px 28px color-mix(in srgb, var(--warn) 24%, transparent); cursor: grab; font-weight: 950; user-select: none; }
+    .tool-card::after { content: attr(data-count); font-size: .72em; margin-left: .45em; opacity: .9; }
+    .tool-card:active { cursor: grabbing; }
+    .score-float { position: fixed; z-index: 400; pointer-events: none; padding: 10px 14px; border-radius: 999px; background: var(--panel-solid); border: 1px solid var(--tile-border); box-shadow: var(--shadow); font-weight: 950; color: var(--text); animation: scoreFloat 900ms ease-out forwards; }
+    .score-float.positive { color: var(--primary-2); }
+    .score-float.negative { color: var(--danger); }
+    @keyframes scoreFloat { 0% { opacity: 0; transform: translate(-50%, 10px) scale(.8); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 100% { opacity: 0; transform: translate(-50%, -52px) scale(.92); } }
+    .score-pop { animation: scorePop 420ms ease both; }
+    @keyframes scorePop { 0% { transform: scale(1); } 40% { transform: scale(1.24); color: var(--primary-2); } 100% { transform: scale(1); } }
+    .tile.clue-reveal { animation: clueFlip 520ms cubic-bezier(.2,.8,.2,1) both; background: var(--tile); color: var(--text); }
+    .tile.menace-card-back {
+      background:
+        radial-gradient(circle at 34% 30%, rgba(255,255,255,0.55), transparent 0.45rem),
+        linear-gradient(135deg, var(--tile-hidden), color-mix(in srgb, var(--primary) 14%, transparent)) !important;
+      color: transparent !important;
+    }
+    .tile.menace-card-back .tile-face { visibility: hidden; }
+    .tile.menace-flip-out { animation: menaceFlipOut 820ms cubic-bezier(.2,.8,.2,1) forwards; }
+    .tile.menace-flip-out .tile-face { animation: menaceFaceOut 820ms cubic-bezier(.2,.8,.2,1) forwards; }
+    .tile.menace-vanish { animation: menaceVanish 520ms cubic-bezier(.3,0,.2,1) forwards; }
+    .tile.menace-arrive { animation: menaceArrive 620ms cubic-bezier(.16,1,.3,1) both; }
+    .tile.menace-flip-in { animation: menaceFlipIn 820ms cubic-bezier(.2,.8,.2,1) forwards; }
+    .tile.menace-flip-in .tile-face { animation: menaceFaceIn 820ms cubic-bezier(.2,.8,.2,1) forwards; }
+    @keyframes menaceFlipOut { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(180deg); } }
+    @keyframes menaceFaceOut { 0%, 48% { opacity: 1; visibility: visible; } 52%, 100% { opacity: 0; visibility: hidden; } }
+    @keyframes menaceVanish { 0% { opacity: 1; transform: rotateY(180deg) scale(1); filter: blur(0); } 100% { opacity: 0; transform: rotateY(180deg) scale(0.02); filter: blur(8px); } }
+    @keyframes menaceArrive { 0% { opacity: 0; transform: rotateY(180deg) scale(0.02); filter: blur(8px); } 100% { opacity: 1; transform: rotateY(180deg) scale(1); filter: blur(0); } }
+    @keyframes menaceFlipIn { 0% { transform: rotateY(180deg); } 100% { transform: rotateY(360deg); } }
+    @keyframes menaceFaceIn { 0%, 48% { opacity: 0; visibility: hidden; } 52%, 100% { opacity: 1; visibility: visible; } }
+    .grid-wrap.menace-active { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent), var(--shadow); }
+    @keyframes menaceSpin { 0% { transform: rotate(0deg) scale(1); filter: brightness(1); } 45% { transform: rotate(220deg) scale(.62); filter: brightness(1.45) hue-rotate(60deg); } 100% { transform: rotate(360deg) scale(1); filter: brightness(1); } }
+    @keyframes clueFlip { 0% { transform: rotateY(0deg) scale(.98); color: transparent; } 49% { transform: rotateY(90deg) scale(1.06); color: transparent; } 50% { color: var(--text); } 100% { transform: rotateY(0deg) scale(1); color: var(--text); } }
+    .word-list {
+      display: flex;
+      flex-wrap: wrap;
+      align-content: center;
+      justify-content: center;
+      align-items: center;
+      gap: var(--word-gap, 6px);
+      overflow: hidden;
+      height: 100%;
+      min-height: 0;
+      padding: 8px;
+      contain: layout;
+    }
+    .word-card {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 999px;
+      cursor: grab;
+      user-select: none;
+      transition: transform 180ms ease, opacity 180ms ease, filter 180ms ease;
+      max-width: 100%;
+      flex: 0 1 var(--word-basis, auto);
+      min-width: 0;
+      height: var(--word-height, 38px);
+      overflow: hidden;
+    }
+    .word-card:hover { transform: translateY(-1px); }
+    .word-card:active { cursor: grabbing; }
+    .word-card.found { cursor: default; opacity: 0.58; filter: grayscale(1); }
+    .word-card.found strong { color: var(--muted); text-decoration: line-through; background: color-mix(in srgb, var(--panel-solid) 72%, var(--muted)); }
+    .word-card.just-found { animation: wordFound 420ms cubic-bezier(.18,.9,.18,1) both; }
+    .word-list.react .word-card:not(.found) { animation: wordListReact 180ms ease both; }
+    .word-card strong {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 100%;
+      width: 100%;
+      padding: 0.34em 0.82em;
+      border-radius: 999px;
+      border: 1px solid var(--tile-border);
+      background: var(--panel-solid);
+      color: var(--text);
+      letter-spacing: 0.05em;
+      font-size: var(--word-font, clamp(0.85rem, 2.4vw, 1.25rem));
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+    }
+    .word-card small { display: none; }
+    @keyframes wordFound { 0% { transform: scale(1); } 45% { transform: scale(1.08); } 100% { transform: scale(.96); } }
+    @keyframes wordListReact { 0% { transform: scale(1); } 50% { transform: scale(1.035); } 100% { transform: scale(1); } }
+
+    .message { display: none; }
+    .highscores { display: grid; gap: 6px; color: var(--muted); font-size: 0.76rem; overflow: hidden; max-height: none; }
+    .score-row { display: flex; justify-content: space-between; gap: 8px; background: var(--panel-solid); color: var(--text); border: 1px solid var(--tile-border); border-radius: 12px; padding: 7px 8px; }
+    .stat-button { color: var(--text); text-align: left; cursor: pointer; }
+
+    .drag-ghost { position: fixed; z-index: 9999; pointer-events: none; padding: 10px 15px; border-radius: 999px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: white; font-weight: 900; letter-spacing: 0.08em; box-shadow: var(--shadow); transform: translate(-50%, -50%); }
+    .mobile-controls { display: none; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .mini-note { color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.36);
+      backdrop-filter: blur(12px);
+      display: none;
+      place-items: center;
+      z-index: 120;
+      padding: 18px;
+    }
+    #profileModal { z-index: 650; }
+    #profileModal .modal { background: var(--panel-solid); }
+    .modal-backdrop.show { display: grid; }
+    .modal {
+      width: min(680px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--tile-border);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .modal-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 18px; }
+    .modal-head h2 { font-size: 1.55rem; letter-spacing: -0.04em; margin: 0; }
+    .modal-head p { color: var(--muted); margin-top: 6px; }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .modal-grid .free-play-config { display: contents; }
+    .setup-modal.challenge-view .free-play-config { display: none; }
+    .setup-modal.free-view .challenge-only { display: none; }
+    .setup-modal.has-profile .new-profile-only { display: none; }
+    .setup-modal.no-profile .existing-profile-only { display: none; }
+    .setup-modal.free-locked .free-play-config { display: none; }
+    .setup-modal.free-locked #startGameBtn { display: none !important; }
+    .setup-modal.free-locked .free-locked-note { display: block; }
+    .free-locked-note { display: none; margin-top: 12px; }
+    .audio-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tile-border); }
+    input[type="range"] { accent-color: var(--primary); width: 100%; }
+    .profile-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+    .profile-tile { background: var(--panel-solid); border: 1px solid var(--tile-border); border-radius: 14px; padding: 9px; }
+    .profile-tile span { display:block; color: var(--muted); font-size: .66rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+    .profile-tile strong { display:block; margin-top: 2px; font-size: 1rem; }
+    .unlock-note { color: var(--muted); font-size: .78rem; line-height: 1.35; margin-top: 10px; }
+    .perk-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .perk-pill { border-radius:999px; padding:6px 9px; background: color-mix(in srgb, var(--primary) 12%, var(--panel-solid)); border:1px solid var(--tile-border); font-size:.72rem; font-weight:800; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    .leaderboard-list { display: grid; gap: 8px; max-height: min(52vh, 430px); overflow: hidden; }
+    .help-copy { display: grid; gap: 10px; }
+    .bank-progress { display: none !important; }
+    .leaderboard-list .score-row { font-size: 0.92rem; }
+    .profile-hero { display:grid; place-items:center; gap:10px; margin: 8px 0 16px; text-align:center; }
+    .profile-logo { width: 104px; height: 104px; border-radius: 32px; display:grid; place-items:center; color:white; font-weight:1000; font-size:2.1rem; letter-spacing:-0.08em; position:relative; overflow:hidden; box-shadow: 0 20px 50px color-mix(in srgb, var(--primary) 26%, transparent); background: var(--profile-bg, linear-gradient(135deg, var(--primary), var(--primary-2))); }
+    .profile-logo::before { content:""; position:absolute; inset: var(--shape-inset, 18px); border-radius: var(--shape-radius, 999px); background: var(--shape-bg, rgba(255,255,255,.28)); transform: rotate(var(--shape-rot, 18deg)); mix-blend-mode: screen; }
+    .profile-logo::after { content:""; position:absolute; width: var(--dot-size, 28px); height: var(--dot-size, 28px); border-radius: 999px; right: 10px; bottom: 10px; background: var(--dot-bg, rgba(255,255,255,.5)); }
+    .profile-logo span { position:relative; z-index:2; text-shadow:0 3px 12px rgba(0,0,0,.25); }
+    .profile-name-display { font-size: clamp(1.7rem, 5vw, 3.1rem); font-weight:1000; letter-spacing:-0.08em; line-height:.9; background: linear-gradient(135deg, var(--primary), var(--primary-2), var(--warn)); -webkit-background-clip:text; color:transparent; }
+    .profile-subtitle { color: var(--muted); font-weight:800; font-size:.9rem; }
+    .profile-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-top:14px; }
+    .challenge-path { display: grid; gap: 8px; margin-top: 14px; }
+    .challenge-level { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 9px; border-radius: 14px; background: var(--panel-solid); border: 1px solid var(--tile-border); color: var(--text); }
+    .challenge-level.current { outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent); }
+    .challenge-level.locked { opacity: .55; }
+    .challenge-badge { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: white; font-weight: 1000; }
+    .challenge-title { font-weight: 950; }
+    .challenge-meta { color: var(--muted); font-size: .75rem; margin-top: 2px; }
+    .profile-grid .profile-tile strong { font-size: 1.15rem; }
+    .bank-progress { display:grid; gap:8px; margin-top:14px; }
+    .bank-row { display:grid; grid-template-columns: 88px 1fr auto; gap:8px; align-items:center; font-size:.8rem; color:var(--muted); }
+    .bank-bar { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--muted) 18%, transparent); overflow:hidden; }
+    .bank-fill { height:100%; width:var(--progress); border-radius:999px; background:linear-gradient(90deg, var(--primary), var(--primary-2)); }
+
+    .celebration { position: fixed; inset: 0; pointer-events: none; display: grid; place-items: center; z-index: 100; opacity: 0; transition: opacity 220ms ease; }
+    .celebration.show { opacity: 1; }
+    .celebration-card {
+      padding: 36px 42px;
+      border-radius: 32px;
+      background: var(--panel-solid);
+      border: 1px solid var(--tile-border);
+      box-shadow: var(--shadow);
+      text-align: center;
+      transform: scale(1);
+    }
+    .celebration-card strong {
+      display: block;
+      font-size: clamp(3rem, 10vw, 6.5rem);
+      letter-spacing: -0.07em;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2), var(--warn));
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .celebration-card span {
+      display:block;
+      margin-top:10px;
+      font-size: clamp(1rem, 2.5vw, 1.6rem);
+      color: var(--muted);
+      font-weight: 800;
+    }
+    
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: auto auto minmax(0, 1fr) minmax(120px, 26vh); }
+      header { align-items: stretch; flex-direction: column; }
+      .top-actions { justify-content: flex-start; overflow-x: hidden; padding-bottom: 2px; }
+      .user-chip { padding: 7px 9px; }
+      .stats-top { grid-template-columns: repeat(4, minmax(70px, 1fr)); }
+      .side-right { min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+      .word-list { max-height: none; flex-direction: row; flex-wrap: wrap; }
+      .side-right h2:nth-of-type(2), .highscores { display: none; }
+      .mobile-controls { display: grid; }
+    }
+    @media (max-width: 620px) {
+      .app { padding: 8px; gap: 7px; grid-template-rows: auto auto minmax(0, 1fr) minmax(105px, 24vh); }
+      header, .panel { border-radius: 16px; padding: 8px; }
+      .brand { gap: 8px; }
+      .logo { width: 34px; height: 34px; border-radius: 12px; }
+      .tagline { display: none; }
+      .stats-top { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+      .stat { padding: 6px 7px; }
+      .stat strong { font-size: 0.98rem; }
+      .stat small { display: none; }
+      .btn { padding: 7px 9px; font-size: 0.78rem; }
+      .icon-btn { width: 34px; height: 34px; padding: 0; }
+      .user-chip { font-size: 0.74rem; padding: 7px 8px; }
+      .user-chip small { display: none; }
+      .modal-grid { grid-template-columns: 1fr; }
+      .is-free-hidden { display: none; }
+      .side-right h2:nth-of-type(2), .highscores { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo">W</div>
+        <div>
+          <h1 data-i18n="title">Wordingle</h1>
+          <p class="tagline" data-i18n="tagline">Find hidden words at your own pace.</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="user-chip" id="currentUserChip">👤 Player <small>Lv 1</small></div>
+        <button class="btn secondary icon-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle theme">🌙</button>
+        <button class="btn secondary icon-btn" id="randomThemeBtn" aria-label="Random theme" title="Random theme">🎨</button>
+        <button class="btn secondary icon-btn" id="soundBtn" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+        <button class="btn secondary icon-btn" id="settingsBtn" aria-label="Settings" title="Settings">⚙️</button>
+        <button class="btn secondary" id="helpBtn" data-i18n="help">Help</button>
+        <button class="btn danger" id="giveUpBtn" disabled data-i18n="giveUp">Give up</button>
+        <button class="btn" id="setupBtn" data-i18n="play">Play</button>
+      </div>
+    </header>
+
+    <section class="stats-top">
+      <div class="stat"><span data-i18n="time">Time</span><strong id="timeStat">0:00</strong><small id="setupMeta">Not started</small></div>
+      <div class="stat"><span data-i18n="score">Score</span><strong id="scoreStat">0</strong><small data-i18n="scoreHint">Higher is better</small></div>
+      <div class="stat"><span data-i18n="found">Found</span><strong id="foundStat">0/0</strong><small data-i18n="foundHint">Words solved</small></div>
+      <button class="stat stat-button" id="leaderboardBtn" type="button"><span data-i18n="best">Best</span><strong id="bestStat">—</strong><small data-i18n="leaderboardHint">View top 10</small></button>
+    </section>
+    <div class="setup-chip" id="setupChip"></div>
+
+    <main class="game-shell">
+      <section class="panel grid-wrap">
+        <div id="grid" class="letter-grid"></div>
+      </section>
+    </main>
+
+    <aside class="panel side-right">
+      <div class="tools-header">
+        <h2 data-i18n="tools">Tools</h2>
+        <div id="toolList" class="tool-list"></div>
+      </div>
+      <h2 data-i18n="words">Words</h2>
+      <div id="wordList" class="word-list"></div>
+      <div class="message" id="message">Pick your setup and start when ready.</div>
+      <h2 style="margin-top:18px; display:none" data-i18n="highScores">High scores</h2>
+      <div id="highscores" class="highscores" style="display:none"></div>
+    </aside>
+  </div>
+
+  <div class="modal-backdrop show" id="setupModal">
+    <div class="modal setup-modal" id="setupModalCard">
+      <div class="modal-head">
+        <div>
+          <h2 data-i18n="playTitle">Play Wordingle</h2>
+          <p data-i18n="playIntro">Continue your challenge path, or unlock free play later.</p>
+        </div>
+        <button class="btn secondary" id="closeSetupBtn" data-i18n="close">Close</button>
+      </div>
+      <div class="modal-grid">
+        <label class="new-profile-only"><span data-i18n="playerName">Player name</span>
+          <input id="playerNameInput" maxlength="18" placeholder="Player" />
+        </label>
+        <label class="new-profile-only"><span data-i18n="audience">Audience</span>
+          <select id="audienceSelect"></select>
+        </label>
+        <label><span data-i18n="language">Language</span>
+          <select id="languageSelect"></select>
+        </label>
+        <input type="hidden" id="playStyleSelect" value="challenge" />
+        <div class="free-play-config">
+          <label><span data-i18n="mode">Mode</span>
+            <select id="modeSelect"></select>
+          </label>
+          <label><span data-i18n="difficulty">Difficulty</span>
+            <select id="difficultySelect"></select>
+          </label>
+          <label><span data-i18n="gridSize">Grid size</span>
+            <select id="gridSizeSelect"></select>
+          </label>
+          <label id="menaceLabel"><span data-i18n="menace">Reshuffle mode</span>
+            <select id="menaceSelect"></select>
+          </label>
+          <label><span data-i18n="wordCount">Words to hide</span>
+            <select id="wordCountSelect"></select>
+          </label>
+        </div>
+      </div>
+      <div class="challenge-path challenge-only" id="setupChallengePath"></div>
+      <div class="mini-note free-locked-note" data-i18n="freePlayLocked">Free play unlocks after completing a challenge path.</div>
+      <div class="profile-strip">
+        <div class="profile-tile"><span data-i18n="level">Level</span><strong id="profileLevel">1</strong></div>
+        <div class="profile-tile"><span data-i18n="xp">XP</span><strong id="profileXp">0</strong></div>
+        <div class="profile-tile"><span data-i18n="runs">Runs</span><strong id="profileRuns">0</strong></div>
+      </div>
+      <div class="unlock-note" id="unlockNote"></div>
+      <div class="perk-list" id="perkList"></div>
+      <div class="modal-actions">
+        <button class="btn secondary" id="resetProfileBtn" data-i18n="resetProfile">Reset profile</button>
+        <button class="btn secondary" id="modalRandomThemeBtn" data-i18n="randomTheme">Random theme</button>
+        <button class="btn secondary existing-profile-only" id="freePlayBtn" data-i18n="freePlay">Free play</button>
+        <button class="btn secondary" id="challengeModeBtn" data-i18n="challengePlay">Challenge mode</button>
+        <button class="btn success" id="continueChallengeBtn" data-i18n="continueChallenge">Continue challenge</button>
+        <button class="btn success" id="startGameBtn" data-i18n="startGame">Start game</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="profileModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2 data-i18n="profileTitle">Player profile</h2>
+          <p data-i18n="profileIntro">Your local progress and unlocks.</p>
+        </div>
+        <button class="btn secondary" id="closeProfileBtn" data-i18n="close">Close</button>
+      </div>
+      <div class="profile-hero">
+        <div class="profile-logo" id="profileLogo"><span>PL</span></div>
+        <div class="profile-name-display" id="profileNameDisplay">Player</div>
+        <div class="profile-subtitle" id="profileSubtitle">Level 1 · 0 XP</div>
+      </div>
+      <div class="profile-grid" id="profileDetailGrid"></div>
+      <div class="challenge-path" id="challengePath"></div>
+      <div class="bank-progress" id="bankProgress"></div>
+      <div class="modal-actions">
+        <button class="btn danger" id="profileResetBtn" data-i18n="resetProfile">Reset profile</button>
+        <button class="btn success" id="profileNextBtn" data-i18n="continueChallenge">Continue challenge</button>
+        <button class="btn success" id="profilePlayBtn" data-i18n="setup">Setup game</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="helpModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2 data-i18n="helpTitle">How to play</h2>
+          <p data-i18n="helpText">Drag a word onto the first tile where you think it starts.</p>
+        </div>
+        <button class="btn secondary" id="closeHelpBtn" data-i18n="close">Close</button>
+      </div>
+      <div class="mini-note help-copy">
+        <p><strong>Goal:</strong> find every hidden word in the letter grid.</p>
+        <p><strong>How to answer:</strong> drag a word from the word list onto the first letter of its path. Move slightly across the tile while dragging to choose horizontal, vertical or diagonal direction.</p>
+        <p><strong>Progress:</strong> found words stay visible in the list, but turn grey with a line through them so you can track what remains without the layout jumping around.</p>
+        <p><strong>Challenge mode:</strong> progress through fixed levels. Child challenges scale from simple 3-letter words and tiny grids up to teen-level puzzles. Adult challenges scale through longer words, tougher grids and faster reshuffles.</p>
+        <p><strong>Reshuffle:</strong> unlocked tiles periodically flip away, vanish, return and reveal a newly arranged grid. Found words stay locked.</p>
+        <p><strong>Free play:</strong> unlocks after completing either the child or adult challenge path. Scores are stored separately from challenge scores.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2 data-i18n="settings">Settings</h2>
+          <p data-i18n="settingsIntro">Tune sound, ambience and effects.</p>
+        </div>
+        <button class="btn secondary" id="closeSettingsBtn" data-i18n="close">Close</button>
+      </div>
+      <div class="modal-grid">
+        <label><span data-i18n="music">Ambience</span>
+          <select id="musicSelect"></select>
+        </label>
+        <label><span data-i18n="soundToggle">Sound</span>
+          <button class="btn secondary" id="settingsSoundBtn" type="button">🔊</button>
+        </label>
+      </div>
+      <div class="audio-options">
+        <label><span data-i18n="musicVolume">Music volume</span>
+          <input type="range" id="musicVolumeSlider" min="0" max="100" value="55" />
+        </label>
+        <label><span data-i18n="sfxVolume">Effects volume</span>
+          <input type="range" id="sfxVolumeSlider" min="0" max="100" value="75" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="leaderboardModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2 data-i18n="leaderboardTitle">Leaderboard</h2>
+          <p id="leaderboardSub">Top scores for this setup.</p>
+        </div>
+        <button class="btn secondary" id="closeLeaderboardBtn" data-i18n="close">Close</button>
+      </div>
+      <div id="leaderboardList" class="leaderboard-list"></div>
+    </div>
+  </div>
+
+  <div class="celebration" id="celebration">
+    <div class="celebration-card">
+      <strong id="celebrationTitle">Solved!</strong>
+      <span id="celebrationSub">The grid gives up its secrets.</span>
+    </div>
+  </div>
+
+  <script type="application/json" id="wordBanksJson">
+  {
+    "en": {
+      "kids": ["CAT", "DOG", "SUN", "MOON", "TREE", "CAKE", "BALL", "FISH", "STAR", "BIRD", "BOOK", "RAIN", "DUCK", "LION", "FROG", "HOME", "PLAY", "SHIP", "CLOUD", "WATER", "SAND", "TOY", "HAT", "MILK", "APPLE", "BREAD", "SMILE", "BEAR", "KITE", "POND", "ROSE"],
+      "nature": ["FOREST", "RIVER", "ACORN", "MEADOW", "FLOWER", "THUNDER", "BREEZE", "WILLOW", "MOSS", "OTTER", "BEETLE", "ORCHID", "SUNRISE", "CANYON", "GLACIER", "DESERT", "VALLEY", "CLIFF", "OCEAN", "MOUNTAIN", "STREAM", "FERN", "HOLLOW", "IVY", "ROOT"],
+      "space": ["ORBIT", "NEBULA", "COMET", "GALAXY", "ASTEROID", "ROCKET", "QUASAR", "VOYAGER", "ECLIPSE", "SATURN", "COSMOS", "STATION", "GRAVITY", "MODULE", "SOLAR", "PHOTON", "PLANET", "METEOR", "LUNAR", "PULSAR", "VECTOR"],
+      "food": ["PIZZA", "BURGER", "PASTA", "SALAD", "STEAK", "SOUP", "CHEESE", "BREAD", "RICE", "NOODLE", "FRUIT", "VEGGIE", "COOKIE", "CAFE", "SPICE", "GARLIC", "BUTTER", "TOMATO", "PEPPER", "CARROT"],
+      "tech": ["SERVER", "CLOUD", "API", "SCRIPT", "BINARY", "DATA", "CACHE", "SYSTEM", "CLIENT", "DEBUG", "KERNEL", "THREAD", "STACK", "ROUTER", "PIXEL", "TOKEN", "LOGIC", "QUERY", "SOCKET"],
+      "fantasy": ["DRAGON", "WIZARD", "SPELL", "CASTLE", "SWORD", "ELF", "ORC", "QUEST", "MAGIC", "PORTAL", "KNIGHT", "GOBLIN", "RUNE", "POTION", "SHIELD", "CROWN", "MERLIN"],
+      "adult": ["LABYRINTH", "KALEIDOSCOPE", "MOMENTUM", "CHRONICLE", "PARADOX", "EQUINOX", "ARCHIPELAGO", "SYNTHESIS", "CATHEDRAL", "VORTEX", "TURBULENCE", "CIPHER", "ORACLE", "HARMONY"],
+      "chaos": ["A7X", "NOVA42", "Q9", "ZETA5", "BINARY10", "K2", "RIFT8", "TANGO3", "PULSE77", "ION4", "XENO9", "BETA12", "VOLT6"],
+      "menace": ["MAYHEM", "RUMBLE", "CHAOS", "JUMBLE", "PANIC", "TANGLE", "WOBBLE", "FRENZY", "GLITCH", "HAVOC", "SCRAMBLE", "TURMOIL", "RATTLE", "SHUFFLE", "WILD", "PRANK", "GOBLIN", "ZIGZAG"]
+    },
+    "ga": {
+      "kids": ["CAT", "MADRA", "GRA", "CRANN", "BALL", "EISC", "REALTA", "LEABHAR", "BAISTE", "LACH", "LEON", "LOSCA", "BAILE", "SPRAOI", "CARR", "BOSCA", "BIA", "SOLAS"],
+      "nature": ["COILL", "ABHAINN", "DEARCAN", "BLATH", "TOIRNEACH", "GAOTH", "SAILEACH", "CAONACH", "MADRAUISCE", "CIAROG", "EIRIGHE", "SNEACHTA", "SLIABH", "GLEANN", "FARRAIGE"],
+      "space": ["FITHIS", "REALTRA", "COIMEAD", "REALTRACH", "ROCAID", "ECLIPS", "SATARN", "COSMAS", "STATION", "GEALACH", "GRAINNE", "PLAINED"],
+      "food": ["ARAN", "CAIS", "ANRAITH", "UBH", "IM", "BAINNE", "FEOIL", "PRATA", "ULL", "PIORRA", "CAIFE", "TAE", "SIUCRA"],
+      "tech": ["FREASTALAI", "SCAMALL", "SONRAI", "COD", "LOCHT", "CROILAR", "SNATH", "CEIST", "COMHAD", "PICSEAL"],
+      "fantasy": ["DRAGAN", "DRAOI", "GEASA", "CAISLEAN", "CLAIMH", "SIOG", "EACHRA", "DRAIOCHT", "TAIRSEACH", "RIDIRE"],
+      "adult": ["SAOTHAR", "MEARCHLAR", "COMHTHATHU", "PARADACS", "COMHIONANNAS", "ARDTEAMPALL", "CORRAIL", "SCANCEAL"],
+      "chaos": ["A7X", "NOVA42", "Q9", "ZETA5", "DENARTHA10", "K2", "RIFT8", "TANGO3", "PULSE77", "IAN4"],
+      "menace": ["ANORD", "PRAISC", "CORRAIL", "MEASC", "TORMAN", "CLEAS", "FIAN", "LUASC", "BODHAR", "TRIALL", "GLITCH", "FUAIM", "CASADH"]
+    }
+  }
+  </script>
+
+  <script>
+    const I18N = {
+      en: {
+        language: "Language", english: "English", irish: "Gaeilge", play: "Play", playTitle: "Play Wordingle", playIntro: "Continue your challenge path, or unlock free play later.", settings: "Settings", settingsIntro: "Tune sound, ambience and effects.", soundToggle: "Sound", continueChallenge: "Continue challenge", freePlayLocked: "Free play unlocks after completing a challenge path.", playerName: "Player name", music: "Ambience", musicOff: "Off", musicKids: "Warm hum", musicSpace: "Deep space", musicTechno: "Low pulse", musicFocus: "Calm focus", musicClassical: "Soft resonance", musicFestive: "Winter glow", musicVolume: "Ambience volume", sfxVolume: "Effects volume", level: "Level", xp: "XP", runs: "Runs", profileTitle: "Player profile", profileIntro: "Your local progress and unlocks.", totalTime: "Total time", wordsSolved: "Words solved", wins: "Wins", bankProgress: "Word bank progress", resetConfirmOne: "Reset profile? This will remove XP, levels, stats and unlocks.", resetConfirmTwo: "Final confirmation: permanently delete this profile?", resetProfile: "Reset profile", unlocked: "Unlocked", lightMode: "Light mode", best: "Best", leaderboardHint: "View top 10", leaderboardTitle: "Leaderboard", topScoresFor: "Top scores for this setup", noConfigScore: "No score yet",
+        title: "Wordingle", tagline: "Find hidden words at your own pace.", playStyle: "Play style", freePlay: "Free play", challengePlay: "Challenge mode", audience: "Audience", child: "Child", adultAudience: "Adult", help: "Help", helpTitle: "How to play", helpText: "Drag a word onto the first tile where you think it starts. Direction is inferred from where you drag across the start tile. Reveal tools can uncover hidden letters. In challenge mode, Reshuffle rearranges unlocked tiles on a countdown. Found words are locked safely in place.", menace: "Reshuffle mode", menaceOff: "Off", menaceOn: "On", menaceEvent: "Reshuffle! The grid is changing.", reshuffleIn: "Reshuffle in", theme: "Dark mode", randomTheme: "Random theme", giveUp: "Give up", setup: "Setup", play: "Play",
+        time: "Time", score: "Score", clues: "Clues", tools: "Tools", found: "Found", scoreHint: "Higher is better", clueHint: "Reveal hidden letters", foundHint: "Words solved",
+        words: "Words", highScores: "High scores", setupTitle: "Set up Wordingle", setupIntro: "Choose the puzzle style. This locks in when the game starts.", close: "Close",
+        mode: "Mode", difficulty: "Difficulty", gridSize: "Grid size", wordCount: "Words to hide", startGame: "Start game",
+        soundOn: "Sound: on", soundOff: "Sound: off", notStarted: "Not started", chooseMode: "Choose a mode to begin.", ready: "Ready", locked: "Playing",
+        messageStart: "Pick your setup and start when ready.", messagePlaying: "Game started. Drag a word onto its starting tile.", messageClue: "Tap any hidden tile to reveal it.", noClues: "No clues left. Brave mode activated.", visible: "That tile is already visible. Choose a hidden one.", clueSpent: "Clue spent. A letter has surfaced.", foundWord: "Nice! {word} found. Ripple-tastic.", wrong: "Not there. Try another start tile or change direction.", drop: "Drop the word onto the first tile of its hidden path.", solved: "Solved!", solvedSub: "Every word found. Deliciously clever.", reveal: "Revealing!", revealSub: "No shame. The grid was being cheeky.", revealWatch: "Watch the correct answers reveal.", noScores: "No scores yet. Go make history.", wordPlaceholder: "Words will appear here after you start.", points: "pts base", hint: "Open setup, start a game, then drag a word onto the grid.", direction: "Direction set to {dir}. Drag a word onto the grid."
+      },
+      ga: {
+        language: "Teanga", english: "English", irish: "Gaeilge", play: "Imir", playTitle: "Imir Wordingle", playIntro: "Lean do chosán dúshláin, nó díghlasáil saor-imirt níos déanaí.", settings: "Socruithe", settingsIntro: "Socraigh fuaim, atmaisféar agus éifeachtaí.", soundToggle: "Fuaim", continueChallenge: "Lean den dúshlán", freePlayLocked: "Díghlasáiltear saor-imirt tar éis cosán dúshláin a chríochnú.", playerName: "Ainm imreora", music: "Atmaisféar", musicOff: "As", musicKids: "Crónán te", musicSpace: "Spás domhain", musicTechno: "Buille íseal", musicFocus: "Fócas ciúin", musicClassical: "Athshondas bog", musicFestive: "Lonrú geimhridh", musicVolume: "Airde atmaisféir", sfxVolume: "Airde éifeachtaí", level: "Leibhéal", xp: "XP", runs: "Babhtaí", profileTitle: "Próifíl imreora", profileIntro: "Do dhul chun cinn áitiúil.", totalTime: "Am iomlán", wordsSolved: "Focail réitithe", wins: "Buanna", bankProgress: "Dul chun cinn banc focal", resetConfirmOne: "Athshocraigh an phróifíl? Bainfear XP, leibhéil, staitisticí agus díghlasálacha.", resetConfirmTwo: "Deimhniú deireanach: scrios an phróifíl seo go buan?", resetProfile: "Athshocraigh", unlocked: "Díghlasáilte", lightMode: "Mód geal", best: "Is fearr", leaderboardHint: "Barr 10", leaderboardTitle: "Clár ceannais", topScoresFor: "Na scóir is fearr don socrú seo", noConfigScore: "Gan scór fós",
+        title: "Wordingle", tagline: "Aimsigh focail fholaithe ar do shuaimhneas.", playStyle: "Stíl imeartha", freePlay: "Saor-imirt", challengePlay: "Dúshlán", audience: "Lucht imeartha", child: "Páiste", adultAudience: "Duine fásta", help: "Cabhair", helpTitle: "Conas imirt", helpText: "Tarraing focal chuig an gcéad tíl ina gceapann tú go dtosaíonn sé. Tuigtear an treo ón tarraingt. Is féidir le huirlisí litreacha folaithe a nochtadh. Sa mhodh dúshláin, athmheascann an ghreille tíleanna neamhghlasáilte ar chomhaireamh síos. Fanann focail aimsithe slán.", menace: "Athmheascadh", menaceOff: "As", menaceOn: "Ann", menaceEvent: "Athmheascadh! Tá an ghreille ag athrú.", reshuffleIn: "Athmheascadh i", theme: "Mód dorcha", randomTheme: "Téama randamach", giveUp: "Éirigh as", setup: "Socrú", play: "Imir",
+        time: "Am", score: "Scór", clues: "Leideanna", tools: "Uirlisí", found: "Aimsithe", scoreHint: "Is fearr níos airde", clueHint: "Nocht litreacha", foundHint: "Focail réitithe",
+        words: "Focail", highScores: "Scóir arda", setupTitle: "Socraigh Wordingle", setupIntro: "Roghnaigh stíl an phuzail. Glasálfar í nuair a thosaíonn an cluiche.", close: "Dún",
+        mode: "Modh", difficulty: "Deacracht", gridSize: "Méid greille", wordCount: "Focail le cur i bhfolach", startGame: "Tosaigh",
+        soundOn: "Fuaim: ann", soundOff: "Fuaim: as", notStarted: "Gan tosú", chooseMode: "Roghnaigh modh le tosú.", ready: "Réidh", locked: "Á imirt",
+        messageStart: "Roghnaigh an socrú agus tosaigh nuair atá tú réidh.", messagePlaying: "Tá an cluiche tosaithe. Tarraing focal chuig an gcéad tíl.", messageClue: "Tapáil tíl fholaithe chun í a nochtadh.", noClues: "Níl aon leid fágtha. Bí cróga anois.", visible: "Tá an tíl sin le feiceáil cheana.", clueSpent: "Úsáideadh leid. Tá litir tagtha chun solais.", foundWord: "Go hiontach! Fuarthas {word}.", wrong: "Ní ansin atá sé. Bain triail eile as.", drop: "Scaoil an focal ar chéad tíl a chosáin.", solved: "Réitithe!", solvedSub: "Fuarthas gach focal. Go gleoite.", reveal: "Á nochtadh!", revealSub: "Ná bí buartha. Bhí an ghreille dána.", revealWatch: "Féach ar na freagraí cearta á nochtadh.", noScores: "Níl aon scór fós. Déan stair.", wordPlaceholder: "Beidh na focail anseo tar éis duit tosú.", points: "pointe bonn", hint: "Oscail an socrú, tosaigh cluiche, ansin tarraing focal chuig an ngreille.", direction: "Treo socraithe go {dir}. Tarraing focal chuig an ngreille."
+      }
+    };
+
+    const WORD_BANKS = JSON.parse(document.getElementById("wordBanksJson").textContent);
+
+    const OPTIONS = {
+      en: {
+        modes: { kids: "Kids: bright little words", nature: "Nature trail", space: "Space voyage", food: "Food feast", tech: "Tech lab", fantasy: "Fantasy quest", adult: "Adult: longer words", chaos: "Chaos: letters + numbers", menace: "Menace: grid goes cuckoo" },
+        difficulties: { foundation: "Foundation: all letters visible", easy: "Easy: more visible letters", normal: "Normal: balanced", hard: "Hard: more hidden letters", expert: "Expert: spicy puzzle" }
+      },
+      ga: {
+        modes: { kids: "Páistí: focail gheala", nature: "Conair dúlra", space: "Turas spáis", food: "Féasta bia", tech: "Saotharlann teic", fantasy: "Eachtra fantaisíochta", adult: "Daoine fásta: focail níos faide", chaos: "Anord: litreacha + uimhreacha", menace: "Bagairt: greille craiceáilte" },
+        difficulties: { foundation: "Bunleibhéal: gach litir le feiceáil", easy: "Éasca: níos mó litreacha le feiceáil", normal: "Gnáth: cothrom", hard: "Deacair: níos mó i bhfolach", expert: "Saineolaí: dúshlán spraíúil" }
+      }
+    };
+
+    const DIFFICULTY = {
+      foundation: { hidden: 0, clues: 0, multiplier: 0.75, noClues: true },
+      easy: { hidden: 0.35, clues: 18, multiplier: 1 },
+      normal: { hidden: 0.55, clues: 12, multiplier: 1.25 },
+      hard: { hidden: 0.72, clues: 8, multiplier: 1.6 },
+      expert: { hidden: 0.86, clues: 5, multiplier: 2.1 }
+    };
+
+    const THEMES = [
+      { primary: "#7067ff", secondary: "#00c2a8", warn: "#ffb84d", danger: "#ff5f7a" },
+      { primary: "#ff6b6b", secondary: "#4ecdc4", warn: "#ffe66d", danger: "#ff477e" },
+      { primary: "#7c3aed", secondary: "#f97316", warn: "#facc15", danger: "#ef4444" },
+      { primary: "#06b6d4", secondary: "#84cc16", warn: "#f59e0b", danger: "#f43f5e" },
+      { primary: "#ec4899", secondary: "#8b5cf6", warn: "#fb923c", danger: "#e11d48" }
+    ];
+
+    const DEFAULT_PROFILE = { name: "Player", xp: 0, level: 1, runs: 0, wins: 0, completed: {}, perks: [], totalTime: 0, wordsSolved: 0, bankProgress: {}, challengeProgress: {}, logo: null, seenProfile: false };
+
+    function hashString(str) {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return Math.abs(h >>> 0);
+    }
+
+    function initialsForName(name) {
+      const parts = (name || "Player").trim().split(" ").filter(Boolean).slice(0, 2);
+      return parts.map(part => part[0]?.toUpperCase()).join("") || "PL";
+    }
+
+    function generateLogo(name) {
+      const seed = hashString(name || "Player");
+      const colors = ["#7067ff", "#00c2a8", "#ffb84d", "#ff5f7a", "#7c3aed", "#06b6d4", "#ec4899", "#84cc16"];
+      const a = colors[seed % colors.length];
+      const b = colors[Math.floor(seed / 7) % colors.length];
+      const c = colors[Math.floor(seed / 17) % colors.length];
+      return {
+        bg: `linear-gradient(${120 + seed % 120}deg, ${a}, ${b})`,
+        shapeBg: c,
+        shapeInset: `${12 + seed % 18}px`,
+        shapeRadius: `${18 + seed % 42}px`,
+        shapeRot: `${(seed % 80) - 40}deg`,
+        dotSize: `${18 + seed % 26}px`,
+        dotBg: "rgba(255,255,255,.55)",
+        initials: initialsForName(name)
+      };
+    }
+
+    function ensureProfileLogo() {
+      if (!state.profile.logo) state.profile.logo = generateLogo(state.profile.name || "Player");
+    }
+
+    function loadProfile() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("wordingleProfile") || "{}");
+        const profile = { ...DEFAULT_PROFILE, ...saved };
+        profile.name = profile.name || localStorage.getItem("wordingleLastPlayer") || "Player";
+        profile.bankProgress ||= {};
+        profile.challengeProgress ||= {};
+        profile.completed ||= {};
+        profile.perks ||= [];
+        profile.logo ||= generateLogo(profile.name);
+        return profile;
+      } catch {
+        return { ...DEFAULT_PROFILE, logo: generateLogo("Player") };
+      }
+    }
+
+    function hasCompletion(mode, difficulty) {
+      const profile = state?.profile || loadProfile();
+      return Boolean(profile.completed?.[`${mode}:${difficulty}`]);
+    }
+
+    const UNLOCKS = {
+      kids: () => true,
+      nature: profile => profile.wins >= 2,
+      food: profile => profile.wins >= 2,
+      tech: profile => profile.level >= 2,
+      space: profile => profile.level >= 3,
+      fantasy: profile => profile.level >= 4,
+      adult: profile => hasCompletion("kids", "hard") || hasCompletion("nature", "normal"),
+      menace: profile => profile.level >= 3,
+      chaos: profile => profile.level >= 5 && hasCompletion("space", "hard")
+    };
+
+    const state = {
+      lang: localStorage.getItem("wordingleLang") || "en",
+      gridSize: 10,
+      cells: [],
+      words: [],
+      placements: [],
+      selectedWord: null,
+      selectedTool: null,
+      selectedDir: "right",
+      score: 0,
+      clues: 0,
+      time: 0,
+      timer: null,
+      sound: true,
+      awaitingReveal: false,
+      gameOver: true,
+      gameActive: false,
+      revealInProgress: false,
+      lockedSetup: null,
+      profile: loadProfile(),
+      music: localStorage.getItem("wordingleMusic") || "off",
+      musicTimer: null,
+      musicStep: 0,
+      musicIntensity: 0,
+      menaceTimer: null,
+      menaceInProgress: false,
+      nextReshuffleAt: null,
+      musicVolume: Number(localStorage.getItem("wordingleMusicVolume") || 55) / 100,
+      sfxVolume: Number(localStorage.getItem("wordingleSfxVolume") || 75) / 100
+    };
+
+    const gridEl = document.getElementById("grid");
+    const wordListEl = document.getElementById("wordList");
+    const toolListEl = document.getElementById("toolList");
+    const messageEl = document.getElementById("message");
+    const timeStat = document.getElementById("timeStat");
+    const scoreStat = document.getElementById("scoreStat");
+    const foundStat = document.getElementById("foundStat");
+    const setupMeta = document.getElementById("setupMeta");
+    const setupChip = document.getElementById("setupChip");
+    const playStyleSelect = document.getElementById("playStyleSelect");
+    const audienceSelect = document.getElementById("audienceSelect");
+    const modeSelect = document.getElementById("modeSelect");
+    const difficultySelect = document.getElementById("difficultySelect");
+    const gridSizeSelect = document.getElementById("gridSizeSelect");
+    const wordCountSelect = document.getElementById("wordCountSelect");
+    const menaceSelect = document.getElementById("menaceSelect");
+    const highscoresEl = document.getElementById("highscores");
+    const bestStat = document.getElementById("bestStat");
+    const leaderboardBtn = document.getElementById("leaderboardBtn");
+    const helpBtn = document.getElementById("helpBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsModal = document.getElementById("settingsModal");
+    const settingsSoundBtn = document.getElementById("settingsSoundBtn");
+    const continueChallengeBtn = document.getElementById("continueChallengeBtn");
+    const freePlayBtn = document.getElementById("freePlayBtn");
+    const challengeModeBtn = document.getElementById("challengeModeBtn");
+    const helpModal = document.getElementById("helpModal");
+    const leaderboardModal = document.getElementById("leaderboardModal");
+    const leaderboardList = document.getElementById("leaderboardList");
+    const leaderboardSub = document.getElementById("leaderboardSub");
+    const setupBtn = document.getElementById("setupBtn");
+    const startGameBtn = document.getElementById("startGameBtn");
+    const giveUpBtn = document.getElementById("giveUpBtn");
+    const celebration = document.getElementById("celebration");
+    const celebrationTitle = document.getElementById("celebrationTitle");
+    const celebrationSub = document.getElementById("celebrationSub");
+    const setupModal = document.getElementById("setupModal");
+    const setupModalCard = document.getElementById("setupModalCard");
+    const profileModal = document.getElementById("profileModal");
+    const profileLogo = document.getElementById("profileLogo");
+    const profileNameDisplay = document.getElementById("profileNameDisplay");
+    const profileSubtitle = document.getElementById("profileSubtitle");
+    const profileDetailGrid = document.getElementById("profileDetailGrid");
+    const bankProgressEl = document.getElementById("bankProgress");
+    const challengePathEl = document.getElementById("challengePath");
+    const setupChallengePathEl = document.getElementById("setupChallengePath");
+    const closeProfileBtn = document.getElementById("closeProfileBtn");
+    const profileResetBtn = document.getElementById("profileResetBtn");
+    const profilePlayBtn = document.getElementById("profilePlayBtn");
+    const profileNextBtn = document.getElementById("profileNextBtn");
+    const languageSelect = document.getElementById("languageSelect");
+    const musicSelect = document.getElementById("musicSelect");
+    const playerNameInput = document.getElementById("playerNameInput");
+    const profileLevel = document.getElementById("profileLevel");
+    const profileXp = document.getElementById("profileXp");
+    const profileRuns = document.getElementById("profileRuns");
+    const unlockNote = document.getElementById("unlockNote");
+    const perkList = document.getElementById("perkList");
+    const resetProfileBtn = document.getElementById("resetProfileBtn");
+    const soundBtn = document.getElementById("soundBtn");
+    const currentUserChip = document.getElementById("currentUserChip");
+    const musicVolumeSlider = document.getElementById("musicVolumeSlider");
+    const sfxVolumeSlider = document.getElementById("sfxVolumeSlider");
+
+    const DIRECTIONS = [
+      { key: "right", dr: 0, dc: 1, label: "→" },
+      { key: "down", dr: 1, dc: 0, label: "↓" },
+      { key: "diagDown", dr: 1, dc: 1, label: "↘" },
+      { key: "diagUp", dr: -1, dc: 1, label: "↗" }
+    ];
+
+    let audioCtx;
+    let masterGain;
+    let musicBus;
+    let reverbBus;
+    let delayBus;
+    let delayNode;
+    let delayFeedback;
+    let shimmerGain;
+
+    function ensureAudio() {
+      audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+      if (masterGain) return;
+
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 1;
+      masterGain.connect(audioCtx.destination);
+
+      musicBus = audioCtx.createGain();
+      musicBus.gain.value = state.musicVolume;
+      musicBus.connect(masterGain);
+
+      reverbBus = audioCtx.createGain();
+      reverbBus.gain.value = state.musicVolume * 0.28;
+      reverbBus.connect(masterGain);
+
+      delayBus = audioCtx.createGain();
+      delayBus.gain.value = state.musicVolume * 0.16;
+      delayNode = audioCtx.createDelay(1.2);
+      delayNode.delayTime.value = 0.32;
+      delayFeedback = audioCtx.createGain();
+      delayFeedback.gain.value = 0.23;
+      delayBus.connect(delayNode);
+      delayNode.connect(delayFeedback);
+      delayFeedback.connect(delayNode);
+      delayNode.connect(masterGain);
+
+      shimmerGain = audioCtx.createGain();
+      shimmerGain.gain.value = state.musicVolume * 0.1;
+      shimmerGain.connect(masterGain);
+    }
+    function t(key, vars = {}) {
+      let text = I18N[state.lang][key] || I18N.en[key] || key;
+      Object.entries(vars).forEach(([k, v]) => text = text.replace(`{${k}}`, v));
+      return text;
+    }
+    function beep(freq = 440, duration = 0.08, type = "sine", volume = 0.06) {
+      if (!state.sound) return;
+      ensureAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = freq;
+      osc.type = type;
+      gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(volume * state.sfxVolume, audioCtx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.connect(gain).connect(masterGain);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration + 0.02);
+    }
+
+    function haptic(pattern = 18) {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    }
+
+    function chunkyLockSound(step = 0) {
+      if (!state.sound) return;
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      const base = [196, 220, 247, 262, 294, 330][step % 6];
+      const osc = audioCtx.createOscillator();
+      const sub = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      osc.type = "triangle";
+      sub.type = "sine";
+      osc.frequency.setValueAtTime(base, now);
+      osc.frequency.exponentialRampToValueAtTime(base * 0.82, now + 0.11);
+      sub.frequency.setValueAtTime(base / 2, now);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(900, now);
+      filter.frequency.exponentialRampToValueAtTime(260, now + 0.16);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.12 * state.sfxVolume, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      osc.connect(filter);
+      sub.connect(filter);
+      filter.connect(gain).connect(masterGain);
+      osc.start(now);
+      sub.start(now);
+      osc.stop(now + 0.2);
+      sub.stop(now + 0.2);
+    }
+
+    function playNote(freq, start, duration, type = "square", volume = 0.035, pan = 0, cutoff = 2200, send = 0.18, attack = 0.018) {
+      if (!state.sound || !audioCtx) return;
+      const oscA = audioCtx.createOscillator();
+      const oscB = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+      const dry = audioCtx.createGain();
+      const wet = audioCtx.createGain();
+      const delaySend = audioCtx.createGain();
+
+      oscA.frequency.setValueAtTime(freq, start);
+      oscB.frequency.setValueAtTime(freq * 1.005, start);
+      oscA.type = type;
+      oscB.type = type === "sine" ? "triangle" : type;
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(cutoff, start);
+      filter.Q.value = 0.65;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume, start + attack);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * 0.34), start + duration * 0.58);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      dry.gain.value = 1;
+      wet.gain.value = send;
+      delaySend.gain.value = send * 0.45;
+      if (panner) panner.pan.setValueAtTime(pan, start);
+
+      oscA.connect(filter);
+      oscB.connect(filter);
+      filter.connect(gain);
+      if (panner) {
+        gain.connect(panner);
+        panner.connect(dry);
+        panner.connect(wet);
+        panner.connect(delaySend);
+      } else {
+        gain.connect(dry);
+        gain.connect(wet);
+        gain.connect(delaySend);
+      }
+      dry.connect(musicBus || masterGain);
+      wet.connect(reverbBus || masterGain);
+      delaySend.connect(delayBus || masterGain);
+
+      oscA.start(start);
+      oscB.start(start);
+      oscA.stop(start + duration + 0.05);
+      oscB.stop(start + duration + 0.05);
+    }
+
+    function playNoise(start, duration, volume = 0.018, cutoff = 1800, pan = 0) {
+      if (!state.sound || !audioCtx) return;
+      const buffer = audioCtx.createBuffer(1, Math.max(1, audioCtx.sampleRate * duration), audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const source = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+      filter.type = "highpass";
+      filter.frequency.value = cutoff;
+      gain.gain.setValueAtTime(volume, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      if (panner) panner.pan.value = pan;
+      source.buffer = buffer;
+      source.connect(filter).connect(gain);
+      if (panner) gain.connect(panner).connect(musicBus || masterGain);
+      else gain.connect(musicBus || masterGain);
+      source.start(start);
+      source.stop(start + duration);
+    }
+
+    function playChord(notes, start, duration, type = "triangle", volume = 0.018, spread = 0.25, inversion = 0) {
+      const voiced = notes.map((freq, i) => i < inversion ? freq * 2 : freq);
+      voiced.forEach((freq, i) => playNote(freq, start + i * 0.018, duration, type, volume, (i - (voiced.length - 1) / 2) * spread, 1800, 0.32, 0.04));
+    }
+
+    function playArp(notes, start, stepDur, type = "triangle", volume = 0.012) {
+      notes.forEach((freq, i) => playNote(freq, start + i * stepDur, stepDur * 1.55, type, volume, (i % 2 ? 0.28 : -0.28), 2600, 0.24, 0.012));
+    }
+
+    function playPad(root, start, duration, mode = "major", volume = 0.008) {
+      const intervals = mode === "minor" ? [1, 1.189, 1.498, 2] : [1, 1.26, 1.498, 2];
+      intervals.forEach((ratio, i) => playNote(root * ratio, start + i * 0.04, duration, "sine", volume, (i - 1.5) * 0.22, 1200, 0.5, 0.18));
+    }
+
+    function rand(items) { return items[Math.floor(Math.random() * items.length)]; }
+    function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+    function index(row, col) { return row * state.gridSize + col; }
+    function inBounds(row, col) { return row >= 0 && col >= 0 && row < state.gridSize && col < state.gridSize; }
+    function setMessage(text) { messageEl.textContent = text; }
+
+    function perksForLevel(level) {
+      const perks = [];
+      if (level >= 2) perks.push("+1 clue");
+      if (level >= 3) perks.push("+5% score");
+      if (level >= 4) perks.push("Fast start bonus");
+      if (level >= 5) perks.push("+2 clues");
+      return perks;
+    }
+
+    function saveProfile() {
+      ensureProfileLogo();
+      state.profile.level = Math.max(1, Math.floor(state.profile.xp / 500) + 1);
+      state.profile.perks = perksForLevel(state.profile.level);
+      localStorage.setItem("wordingleProfile", JSON.stringify(state.profile));
+      localStorage.setItem("wordingleLastPlayer", state.profile.name || "Player");
+      renderProfile();
+    }
+
+    function isModeUnlocked(mode) {
+      return UNLOCKS[mode]?.(state.profile) ?? true;
+    }
+
+    function populateSelects() {
+      const playStyleValue = playStyleSelect?.value || "free";
+      const audienceValue = audienceSelect?.value || "child";
+      const modeValue = modeSelect.value || "kids";
+      const difficultyValue = difficultySelect.value || "normal";
+      const languageValue = languageSelect.value || state.lang;
+      const gridSizeValue = gridSizeSelect.value || "10";
+      const wordCountValue = wordCountSelect.value || "8";
+      const menaceValue = menaceSelect?.value || "off";
+      const musicValue = musicSelect.value || state.music || "off";
+
+      playStyleSelect.innerHTML = `<option value="free">${t("freePlay")}</option><option value="challenge">${t("challengePlay")}</option>`;
+      playStyleSelect.value = localStorage.getItem("wordingleProfile") && state.profile.name !== "Player" ? (playStyleValue || "challenge") : playStyleValue;
+      audienceSelect.innerHTML = `<option value="child">${t("child")}</option><option value="adult">${t("adultAudience")}</option>`;
+      audienceSelect.value = audienceValue;
+
+      languageSelect.innerHTML = `
+        <option value="en">${I18N[state.lang].english}</option>
+        <option value="ga">${I18N[state.lang].irish}</option>
+      `;
+      languageSelect.value = languageValue;
+
+      musicSelect.innerHTML = [
+        ["off", t("musicOff")],
+        ["kids", t("musicKids")],
+        ["space", t("musicSpace")],
+        ["techno", t("musicTechno")],
+        ["focus", t("musicFocus")],
+        ["classical", t("musicClassical")],
+        ["festive", t("musicFestive") ]
+      ].map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+      musicSelect.value = musicValue;
+
+      modeSelect.innerHTML = Object.entries(OPTIONS[state.lang].modes).map(([value, label]) => {
+        const unlocked = isModeUnlocked(value);
+        return `<option value="${value}" ${unlocked ? "" : "disabled"}>${label}${unlocked ? "" : " · 🔒"}</option>`;
+      }).join("");
+      difficultySelect.innerHTML = Object.entries(OPTIONS[state.lang].difficulties).map(([value, label]) => `<option value="${value}" ${value === "normal" ? "selected" : ""}>${label}</option>`).join("");
+      gridSizeSelect.innerHTML = [8, 10, 12, 16, 20, 24, 30].map(v => `<option value="${v}" ${v === 10 ? "selected" : ""}>${v} × ${v}</option>`).join("");
+      wordCountSelect.innerHTML = [5, 8, 12, 18].map(v => `<option value="${v}" ${v === 8 ? "selected" : ""}>${v}</option>`).join("");
+      menaceSelect.innerHTML = `<option value="off">${t("menaceOff")}</option><option value="on">${t("menaceOn")}</option>`;
+
+      if ([...modeSelect.options].some(o => o.value === modeValue && !o.disabled)) modeSelect.value = modeValue;
+      else modeSelect.value = "kids";
+      if ([...difficultySelect.options].some(o => o.value === difficultyValue)) difficultySelect.value = difficultyValue;
+      if ([...gridSizeSelect.options].some(o => o.value === gridSizeValue)) gridSizeSelect.value = gridSizeValue;
+      if ([...wordCountSelect.options].some(o => o.value === wordCountValue)) wordCountSelect.value = wordCountValue;
+      if ([...menaceSelect.options].some(o => o.value === menaceValue)) menaceSelect.value = menaceValue;
+      if ([...languageSelect.options].some(o => o.value === languageValue)) languageSelect.value = languageValue;
+      applyPlayStyleVisibility();
+      renderChallengePath(setupChallengePathEl);
+    }
+
+    function hasNamedProfile() {
+      return Boolean(localStorage.getItem("wordingleProfile") && state.profile.name && state.profile.name !== "Player");
+    }
+
+    function applyPlayStyleVisibility() {
+      const challenge = playStyleSelect?.value !== "free";
+      const hasProfile = hasNamedProfile();
+      const freeUnlocked = freePlayUnlocked();
+      setupModalCard?.classList.toggle("challenge-view", challenge);
+      setupModalCard?.classList.toggle("free-view", !challenge);
+      setupModalCard?.classList.toggle("has-profile", hasProfile);
+      setupModalCard?.classList.toggle("no-profile", !hasProfile);
+      setupModalCard?.classList.toggle("free-locked", !challenge && !freeUnlocked);
+      if (freePlayBtn) {
+        freePlayBtn.disabled = !freeUnlocked;
+        freePlayBtn.title = freeUnlocked ? t("freePlay") : t("freePlayLocked");
+      }
+      if (startGameBtn) startGameBtn.style.display = challenge ? "none" : "inline-flex";
+      if (continueChallengeBtn) continueChallengeBtn.style.display = challenge ? "inline-flex" : "none";
+      if (challengeModeBtn) challengeModeBtn.style.display = challenge ? "none" : "inline-flex";
+      renderChallengePath(setupChallengePathEl);
+    }
+
+    function challengeLevels(audience = audienceSelect.value || "child") {
+      const mobile = window.matchMedia("(max-width: 700px)").matches;
+      if (audience === "child") return [
+        { title: "Age 7–8: First Finds", mode: "kids", difficulty: "foundation", size: 5, count: 3, interval: 60 },
+        { title: "Age 8–9: Little Explorer", mode: "kids", difficulty: "easy", size: 6, count: 4, interval: 55 },
+        { title: "Age 9–10: Nature Nibbles", mode: "nature", difficulty: "easy", size: 8, count: 5, interval: 50 },
+        { title: "Age 10–12: Word Ranger", mode: "nature", difficulty: "normal", size: mobile ? 10 : 12, count: 7, interval: 45 },
+        { title: "Age 12–14: Space Scout", mode: "space", difficulty: "normal", size: mobile ? 12 : 14, count: 9, interval: 40 },
+        { title: "Age 14–16: Puzzle Pilot", mode: "fantasy", difficulty: "hard", size: mobile ? 14 : 16, count: 11, interval: 35 }
+      ];
+      return [
+        { title: "Warm-up Grid", mode: "adult", difficulty: "normal", size: mobile ? 10 : 14, count: 8, interval: 60 },
+        { title: "Tech Tangle", mode: "tech", difficulty: "normal", size: mobile ? 12 : 16, count: 10, interval: 55 },
+        { title: "Long Word Lab", mode: "adult", difficulty: "hard", size: mobile ? 14 : 20, count: 12, interval: 50 },
+        { title: "Cosmic Pressure", mode: "space", difficulty: "hard", size: mobile ? 16 : 24, count: 14, interval: 45 },
+        { title: "Chaos Expert", mode: "chaos", difficulty: "expert", size: mobile ? 16 : 30, count: 18, interval: 40 }
+      ];
+    }
+
+    function currentChallengeIndex(audience = audienceSelect.value || "child") {
+      const key = `challenge:${audience}`;
+      return Math.min(challengeLevels(audience).length - 1, state.profile.challengeProgress?.[key] || 0);
+    }
+
+    function challengeComplete(audience) {
+      return (state.profile.challengeProgress?.[`challenge:${audience}`] || 0) >= challengeLevels(audience).length - 1 && state.profile.completed?.[`challengeComplete:${audience}`];
+    }
+
+    function freePlayUnlocked() {
+      return challengeComplete("child") || challengeComplete("adult");
+    }
+
+    function challengeSetup() {
+      return challengeLevels(audienceSelect.value || "child")[currentChallengeIndex(audienceSelect.value || "child")];
+    }
+
+    function renderChallengePath(target = challengePathEl) {
+      if (!target) return;
+      const audience = audienceSelect?.value || state.profile.lastAudience || "child";
+      const levels = challengeLevels(audience);
+      const current = currentChallengeIndex(audience);
+      target.innerHTML = `<h2>${t("challengePlay")}</h2>` + levels.map((level, i) => {
+        const locked = i > current;
+        const scoreKey = getConfigKey({ playStyle: "challenge", audience, challengeIndex: i, lang: state.lang, mode: level.mode, difficulty: level.difficulty, size: level.size, count: level.count });
+        const best = getAllScores().filter(s => s.configKey === scoreKey).sort((a,b) => b.score - a.score || a.time - b.time)[0];
+        return `<div class="challenge-level ${i === current ? "current" : ""} ${locked ? "locked" : ""}"><div class="challenge-badge">${locked ? "🔒" : i + 1}</div><div><div class="challenge-title">${level.title}</div><div class="challenge-meta">${level.size}×${level.size} · ${level.count} words · ${OPTIONS[state.lang].difficulties[level.difficulty].split(":")[0]} · ${t("reshuffleIn")} ${level.interval}s</div></div><strong>${best ? best.score : "—"}</strong></div>`;
+      }).join("");
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = state.lang === "ga" ? "ga" : "en";
+      document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+      updateIconButtons();
+      populateSelects();
+      updateSetupSummary();
+      renderWords();
+      renderHighScores();
+      renderTopHighScore();
+      if (!state.gameActive) setMessage("");
+      renderProfile();
+    }
+
+    function updateIconButtons() {
+      const themeBtn = document.getElementById("themeBtn");
+      themeBtn.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+      themeBtn.title = document.body.classList.contains("dark") ? t("lightMode") : t("theme");
+      themeBtn.setAttribute("aria-label", themeBtn.title);
+      document.getElementById("randomThemeBtn").title = t("randomTheme");
+      document.getElementById("randomThemeBtn").setAttribute("aria-label", t("randomTheme"));
+      soundBtn.textContent = state.sound ? "🔊" : "🔇";
+      soundBtn.title = state.sound ? t("soundOn") : t("soundOff");
+      soundBtn.setAttribute("aria-label", soundBtn.title);
+      if (settingsSoundBtn) settingsSoundBtn.textContent = state.sound ? "🔊 " + t("soundOn") : "🔇 " + t("soundOff");
+    }
+
+    function randomTheme() {
+      const theme = rand(THEMES);
+      applyAccentTheme(theme);
+      localStorage.setItem("wordingleAccentTheme", JSON.stringify(theme));
+      beep(520, 0.04, "triangle");
+      setTimeout(() => beep(720, 0.04, "triangle"), 60);
+    }
+
+    function applyAccentTheme(theme) {
+      document.body.classList.remove("challenge-aesthetic");
+      document.documentElement.style.setProperty("--primary", theme.primary);
+      document.documentElement.style.setProperty("--primary-2", theme.secondary);
+      document.documentElement.style.setProperty("--warn", theme.warn);
+      document.documentElement.style.setProperty("--danger", theme.danger);
+      document.documentElement.style.setProperty("--ripple", theme.secondary + "66");
+    }
+
+    function applyLogoToElement(el, logo) {
+      if (!el || !logo) return;
+      el.style.setProperty("--profile-bg", logo.bg);
+      el.style.setProperty("--shape-bg", logo.shapeBg);
+      el.style.setProperty("--shape-inset", logo.shapeInset);
+      el.style.setProperty("--shape-radius", logo.shapeRadius);
+      el.style.setProperty("--shape-rot", logo.shapeRot);
+      el.style.setProperty("--dot-size", logo.dotSize);
+      el.style.setProperty("--dot-bg", logo.dotBg);
+      el.innerHTML = `<span>${logo.initials}</span>`;
+    }
+
+    function renderProfile() {
+      ensureProfileLogo();
+      if (document.activeElement !== playerNameInput) playerNameInput.value = state.profile.name || "Player";
+      profileLevel.textContent = state.profile.level;
+      profileXp.textContent = state.profile.xp;
+      profileRuns.textContent = state.profile.runs;
+      if (currentUserChip) currentUserChip.innerHTML = `👤 ${state.profile.name || "Player"} <small>Lv ${state.profile.level}</small>`;
+      if (profileNameDisplay) profileNameDisplay.textContent = state.profile.name || "Player";
+      if (profileSubtitle) profileSubtitle.textContent = `${t("level")} ${state.profile.level} · ${state.profile.xp} ${t("xp")}`;
+      applyLogoToElement(profileLogo, state.profile.logo);
+      renderProfileDetails();
+      renderChallengePath(challengePathEl);
+      const unlockedModes = Object.keys(OPTIONS[state.lang].modes).filter(isModeUnlocked).map(m => OPTIONS[state.lang].modes[m].split(":")[0]);
+      unlockNote.textContent = `${t("unlocked")}: ${unlockedModes.join(", ")}. Nature: 2 wins · Space: level 3 · Adult: hard Kids or normal Nature · Chaos: level 5 + hard Space.`;
+      const perks = state.profile.perks?.length ? state.profile.perks : ["No perks yet"];
+      perkList.innerHTML = perks.map(p => `<span class="perk-pill">${p}</span>`).join("");
+    }
+
+    function renderProfileDetails() {
+      if (!profileDetailGrid) return;
+      const tiles = [[t("level"), state.profile.level], [t("xp"), state.profile.xp], [t("runs"), state.profile.runs], [t("wins"), state.profile.wins], [t("totalTime"), formatTime(state.profile.totalTime || 0)], [t("wordsSolved"), state.profile.wordsSolved || 0]];
+      profileDetailGrid.innerHTML = tiles.map(([label, value]) => `<div class="profile-tile"><span>${label}</span><strong>${value}</strong></div>`).join("");
+      if (bankProgressEl) bankProgressEl.innerHTML = "";
+    }
+
+    function applyProfilePerks() {
+      if (state.profile.level >= 5) state.clues += 2;
+      else if (state.profile.level >= 2) state.clues += 1;
+    }
+
+    function xpForRun(won) {
+      if (!state.lockedSetup) return 0;
+      const found = state.words.filter(w => w.found).length;
+      const base = won ? 120 : 20;
+      const diffBonus = { foundation: 0, easy: 10, normal: 25, hard: 45, expert: 70 }[state.lockedSetup.difficulty] || 0;
+      return base + found * 12 + diffBonus;
+    }
+
+    function awardProgress(won) {
+      if (!state.lockedSetup) return;
+      state.profile.name = playerNameInput.value.trim() || state.profile.name || "Player";
+      ensureProfileLogo();
+      state.profile.runs += 1;
+      state.profile.totalTime = (state.profile.totalTime || 0) + state.time;
+      const solvedThisRun = state.words.filter(w => w.found).length;
+      state.profile.wordsSolved = (state.profile.wordsSolved || 0) + solvedThisRun;
+      const bankKey = `${state.lang}:${state.lockedSetup.mode}`;
+      state.profile.bankProgress ||= {};
+      state.profile.bankProgress[bankKey] ||= {};
+      state.words.forEach(w => { if (w.found) state.profile.bankProgress[bankKey][w.word] = true; });
+      if (won) {
+        state.profile.wins += 1;
+        if (state.lockedSetup.playStyle === "challenge") {
+          state.profile.challengeProgress ||= {};
+          state.profile.completed ||= {};
+          const key = `challenge:${state.lockedSetup.audience || "child"}`;
+          const levels = challengeLevels(state.lockedSetup.audience || "child");
+          const nextIndex = Math.min(levels.length - 1, (state.profile.challengeProgress[key] || 0) + 1);
+          state.profile.challengeProgress[key] = nextIndex;
+          if (nextIndex === levels.length - 1) state.profile.completed[`challengeComplete:${state.lockedSetup.audience || "child"}`] = true;
+        }
+        state.profile.completed ||= {};
+        state.profile.completed[`${state.lockedSetup.mode}:${state.lockedSetup.difficulty}`] = true;
+      }
+      state.profile.xp += xpForRun(won);
+      saveProfile();
+      populateSelects();
+    }
+
+    let fireworkLoopId = null;
+    function stopFireworks() {
+      if (fireworkLoopId) clearTimeout(fireworkLoopId);
+      fireworkLoopId = null;
+    }
+
+    function openProfile(auto = false) {
+      renderProfile();
+      profileModal.classList.add("show");
+      profileModal.style.zIndex = "650";
+      if (auto) {
+        state.profile.seenProfile = true;
+        saveProfile();
+      }
+    }
+
+    function openSetup() {
+      document.body.style.filter = "";
+      stopFireworks();
+      celebration.classList.remove("show");
+      playStyleSelect.value = "challenge";
+      document.body.classList.add("challenge-aesthetic");
+      applyPlayStyleVisibility();
+      renderProfile();
+      renderChallengePath(setupChallengePathEl);
+      setupModal.classList.add("show");
+    }
+    function closeSetup() { setupModal.classList.remove("show"); }
+
+    function updateSetupSummary() {
+      if (state.lockedSetup) {
+        const s = state.lockedSetup;
+        const modeLabel = OPTIONS[state.lang].modes[s.mode];
+        const diffLabel = OPTIONS[state.lang].difficulties[s.difficulty].split(":")[0];
+        setupMeta.textContent = `${modeLabel} · ${diffLabel}`;
+        setupChip.textContent = "";
+      } else {
+        setupMeta.textContent = t("notStarted");
+        setupChip.textContent = "";
+      }
+    }
+
+    function chooseWords(mode, count, size) {
+      const bank = WORD_BANKS[state.lang][mode].filter(w => w.length <= size);
+      return shuffle(bank).slice(0, Math.min(count, bank.length)).map(word => ({ word, found: false }));
+    }
+    function createEmptyGrid(size) { return Array.from({ length: size * size }, () => ({ letter: "", hidden: false, found: false, wordIds: [] })); }
+
+    function clearMenaceTimer() {
+      if (state.menaceTimer) clearInterval(state.menaceTimer);
+      state.menaceTimer = null;
+    }
+
+    function canPlace(word, row, col, dir) {
+      for (let i = 0; i < word.length; i++) {
+        const r = row + dir.dr * i;
+        const c = col + dir.dc * i;
+        if (!inBounds(r, c)) return false;
+        const cell = state.cells[index(r, c)];
+        if (cell.letter && cell.letter !== word[i]) return false;
+      }
+      return true;
+    }
+
+    function placeWord(wordObj, wordId) {
+      for (let n = 0; n < 500; n++) {
+        const dir = rand(DIRECTIONS);
+        const row = Math.floor(Math.random() * state.gridSize);
+        const col = Math.floor(Math.random() * state.gridSize);
+        if (!canPlace(wordObj.word, row, col, dir)) continue;
+        const positions = [];
+        for (let i = 0; i < wordObj.word.length; i++) {
+          const r = row + dir.dr * i;
+          const c = col + dir.dc * i;
+          const cell = state.cells[index(r, c)];
+          cell.letter = wordObj.word[i];
+          cell.wordIds.push(wordId);
+          positions.push(index(r, c));
+        }
+        state.placements[wordId] = { word: wordObj.word, row, col, dir: dir.key, positions };
+        return true;
+      }
+      return false;
+    }
+
+    function placeWordAvoidingLocked(wordObj, wordId, lockedPositions) {
+      for (let n = 0; n < 900; n++) {
+        const dir = rand(DIRECTIONS);
+        const row = Math.floor(Math.random() * state.gridSize);
+        const col = Math.floor(Math.random() * state.gridSize);
+        const positions = [];
+        let ok = true;
+        for (let i = 0; i < wordObj.word.length; i++) {
+          const r = row + dir.dr * i;
+          const c = col + dir.dc * i;
+          if (!inBounds(r, c)) { ok = false; break; }
+          const pos = index(r, c);
+          if (lockedPositions.has(pos)) { ok = false; break; }
+          const cell = state.cells[pos];
+          if (cell.letter && cell.letter !== wordObj.word[i]) { ok = false; break; }
+          positions.push(pos);
+        }
+        if (!ok) continue;
+        positions.forEach((pos, i) => {
+          const cell = state.cells[pos];
+          cell.letter = wordObj.word[i];
+          cell.wordIds.push(wordId);
+        });
+        state.placements[wordId] = { word: wordObj.word, row, col, dir: dir.key, positions };
+        return true;
+      }
+      return false;
+    }
+
+    function fillRandomLetters(mode) {
+      const chars = mode === "chaos" ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" : "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      for (const cell of state.cells) if (!cell.letter) cell.letter = chars[Math.floor(Math.random() * chars.length)];
+    }
+    function hideCells(hiddenRatio) { for (const cell of state.cells) cell.hidden = Math.random() < hiddenRatio; }
+    function tileMetricsFor(size) {
+      const wrap = gridEl.closest(".grid-wrap");
+      const availableWidth = Math.max(180, (wrap?.clientWidth || window.innerWidth) - 16);
+      const availableHeight = Math.max(180, (wrap?.clientHeight || window.innerHeight) - 16);
+      const gap = size > 60 ? 1 : size > 30 ? 2 : size > 18 ? 3 : size > 12 ? 4 : 5;
+      const limitingSide = Math.min(availableWidth, availableHeight);
+      const tileSize = Math.max(4, Math.floor((limitingSide - gap * (size - 1)) / size));
+      return { tileSize, gap };
+    }
+
+    function renderGrid() {
+      const { tileSize, gap } = tileMetricsFor(state.gridSize);
+      gridEl.style.setProperty("--cols", state.gridSize);
+      gridEl.style.setProperty("--tile-size", tileSize + "px");
+      gridEl.style.setProperty("--gap", gap + "px");
+      gridEl.innerHTML = "";
+      state.cells.forEach((cell, i) => {
+        const tile = document.createElement("div");
+        tile.className = "tile" + (cell.hidden ? " hidden" : "") + (cell.found ? " found" : "");
+        tile.dataset.index = i;
+        const face = document.createElement("span");
+        face.className = "tile-face";
+        face.textContent = cell.letter;
+        tile.appendChild(face);
+        tile.addEventListener("click", () => handleTileClick(i));
+        tile.addEventListener("pointerenter", () => previewDrop(i));
+        tile.addEventListener("pointerleave", clearPreview);
+        gridEl.appendChild(tile);
+      });
+    }
+
+    function renderTools() {
+      toolListEl.innerHTML = "";
+      document.querySelector(".tools-header")?.classList.remove("has-tools");
+    }
+
+    function renderWords() {
+      wordListEl.innerHTML = "";
+      renderTools();
+
+      if (!state.words.length) return;
+
+      state.words.forEach((w, i) => {
+        const card = document.createElement("div");
+        card.className = "word-card" + (w.found ? " found" : "");
+        card.dataset.wordId = i;
+        card.innerHTML = `<strong>${w.word}</strong>`;
+        if (!w.found) card.addEventListener("pointerdown", e => startDrag(e, i));
+        wordListEl.appendChild(card);
+      });
+
+      fitWordPills();
+    }
+
+    function pulseWordList() {
+      wordListEl.classList.remove("react");
+      void wordListEl.offsetWidth;
+      wordListEl.classList.add("react");
+      setTimeout(() => wordListEl.classList.remove("react"), 220);
+    }
+
+    function fitWordPills() {
+      if (!state.words.length) return;
+      const box = wordListEl.getBoundingClientRect();
+      const count = Math.max(1, state.words.length);
+      const longest = Math.max(...state.words.map(w => w.word.length), 4);
+      const isDesktopSidePanel = window.matchMedia("(min-width: 1101px)").matches;
+      const gap = isDesktopSidePanel ? 7 : 5;
+      const columns = isDesktopSidePanel ? 1 : Math.max(1, Math.ceil(Math.sqrt(count * Math.max(0.8, box.width / Math.max(1, box.height)))));
+      const rows = Math.ceil(count / columns);
+      const cardHeight = Math.max(24, Math.floor((Math.max(60, box.height - 16) - gap * Math.max(0, rows - 1)) / rows));
+      const basis = isDesktopSidePanel ? "min(100%, 15rem)" : `calc((100% - ${gap * (columns - 1)}px) / ${columns})`;
+      const fontByHeight = cardHeight * 0.42;
+      const fontByWidth = (box.width / columns) / Math.max(5.2, longest * 0.72);
+      const fontSize = Math.max(10, Math.min(28, Math.floor(Math.min(fontByHeight, fontByWidth))));
+      wordListEl.style.setProperty("--word-gap", gap + "px");
+      wordListEl.style.setProperty("--word-basis", basis);
+      wordListEl.style.setProperty("--word-height", cardHeight + "px");
+      wordListEl.style.setProperty("--word-font", fontSize + "px");
+    }
+
+    function renderStats() {
+      const min = Math.floor(state.time / 60);
+      const sec = String(state.time % 60).padStart(2, "0");
+      const countdown = state.lockedSetup?.menace && state.nextReshuffleAt ? Math.max(0, Math.ceil((state.nextReshuffleAt - Date.now()) / 1000)) : null;
+      timeStat.textContent = countdown !== null ? `${min}:${sec} · ↻ ${countdown}s` : `${min}:${sec}`;
+      scoreStat.textContent = state.score;
+      foundStat.textContent = `${state.words.filter(w => w.found).length}/${state.words.length}`;
+    }
+
+    function handleTileClick(i) {
+      if (!state.gameActive || state.gameOver || state.revealInProgress) return;
+      if (!state.awaitingReveal) return setMessage(t("messageClue"));
+      const cell = state.cells[i];
+      if (!cell.hidden) return setMessage(t("visible"));
+      if (state.clues <= 0) return setMessage(t("noClues"));
+      cell.hidden = false;
+      state.clues--;
+      state.awaitingReveal = false;
+      beep(740, 0.06, "triangle");
+      renderGrid(); renderStats();
+      gridEl.children[i].classList.add("revealed");
+      setMessage(t("clueSpent"));
+    }
+
+    let ghost = null;
+    function startDrag(e, wordId, tool = "word") {
+      if (!state.gameActive || state.gameOver || state.revealInProgress || state.menaceInProgress) return;
+      if (tool === "word" && state.words[wordId]?.found) return;
+      if (tool === "clue" && state.clues <= 0) return;
+      state.selectedWord = wordId;
+      state.selectedTool = tool;
+      ghost = document.createElement("div");
+      ghost.className = "drag-ghost";
+      ghost.textContent = tool === "clue" ? "?" : state.words[wordId].word;
+      document.body.appendChild(ghost);
+      moveGhost(e);
+      document.addEventListener("pointermove", moveGhost);
+      document.addEventListener("pointerup", endDrag, { once: true });
+      haptic(12);
+      beep(360, 0.04, "square");
+    }
+    function moveGhost(e) {
+      if (!ghost) return;
+      ghost.style.left = e.clientX + "px";
+      ghost.style.top = e.clientY + "px";
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      const tile = target?.closest?.(".tile");
+      if (tile) previewDrop(Number(tile.dataset.index), e); else clearPreview();
+    }
+    function endDrag(e) {
+      haptic(18);
+      document.removeEventListener("pointermove", moveGhost);
+      if (ghost) ghost.remove();
+      ghost = null;
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      const tile = target?.closest?.(".tile");
+      if (tile) {
+        const tileIndex = Number(tile.dataset.index);
+        if (state.selectedTool === "clue") revealTileWithClue(tileIndex);
+        else attemptWord(tileIndex);
+      } else setMessage(t("drop"));
+      state.selectedWord = null;
+      state.selectedTool = null;
+      clearPreview();
+    }
+    function previewDrop(startIndex, pointerEvent = null) {
+      if (state.selectedTool === "clue") {
+        clearPreview();
+        gridEl.children[startIndex]?.classList.add("preview");
+        return;
+      }
+      if (state.selectedWord === null) return;
+      clearPreview();
+      const word = state.words[state.selectedWord].word;
+      const row = Math.floor(startIndex / state.gridSize);
+      const col = startIndex % state.gridSize;
+      let dir = DIRECTIONS.find(d => d.key === state.selectedDir) || DIRECTIONS[0];
+      if (pointerEvent) {
+        const tile = gridEl.children[startIndex];
+        const rect = tile?.getBoundingClientRect();
+        if (rect) {
+          const dx = pointerEvent.clientX - (rect.left + rect.width / 2);
+          const dy = pointerEvent.clientY - (rect.top + rect.height / 2);
+          const threshold = Math.max(4, rect.width * 0.18);
+          if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
+            if (Math.abs(dy) > Math.abs(dx) * 1.35) dir = DIRECTIONS.find(d => d.key === "down");
+            else if (dy < -threshold) dir = DIRECTIONS.find(d => d.key === "diagUp");
+            else if (dy > threshold) dir = DIRECTIONS.find(d => d.key === "diagDown");
+            else dir = DIRECTIONS.find(d => d.key === "right");
+            state.selectedDir = dir.key;
+          }
+        }
+      }
+      for (let i = 0; i < word.length; i++) {
+        const r = row + dir.dr * i;
+        const c = col + dir.dc * i;
+        if (!inBounds(r, c)) break;
+        gridEl.children[index(r, c)]?.classList.add("preview");
+      }
+    }
+    function clearPreview() { [...gridEl.children].forEach(t => t.classList.remove("preview")); }
+
+    function revealTileWithClue(i) {
+      state.selectedTool = null;
+      state.selectedWord = null;
+      if (!state.gameActive || state.clues <= 0 || state.menaceInProgress) return;
+      const cell = state.cells[i];
+      if (!cell || !cell.hidden) {
+        premiumShake();
+        return;
+      }
+      cell.hidden = false;
+      state.clues--;
+      renderGrid();
+      renderWords();
+      renderStats();
+      pulseWordList();
+      const tile = gridEl.children[i];
+      tile?.classList.add("clue-reveal");
+      beep(620, 0.055, "sine", 0.035);
+    }
+
+    function attemptWord(startIndex) {
+      if (state.menaceInProgress) {
+        state.selectedWord = null;
+        state.selectedTool = null;
+        clearPreview();
+        setMessage(t("menaceEvent"));
+        return;
+      }
+      if (state.selectedWord === null) return;
+      const wordId = state.selectedWord;
+      state.selectedWord = null;
+      const placement = state.placements[wordId];
+      const row = Math.floor(startIndex / state.gridSize);
+      const col = startIndex % state.gridSize;
+      if (!placement) return;
+      if (placement.row === row && placement.col === col && placement.dir === state.selectedDir) {
+        state.words[wordId].found = true;
+        placement.positions.forEach(pos => { state.cells[pos].found = true; state.cells[pos].hidden = false; });
+        const difficulty = DIFFICULTY[state.lockedSetup.difficulty];
+        const pointsAwarded = Math.round(placement.word.length * 100 * difficulty.multiplier + Math.max(0, 180 - state.time));
+        state.score += pointsAwarded;
+        setMessage(t("foundWord", { word: placement.word }));
+        renderGrid(); renderStats();
+        showScoreFloat(`+${pointsAwarded}`, true);
+        animateScoreChange();
+        animateWordCardAway(wordId);
+        pulseWordList();
+        updateMusicIntensity();
+        animateFoundWord(placement.positions);
+        premiumSatisfactionPulse();
+        haptic([18, 35, 18]);
+        setTimeout(() => { renderWords(); renderStats(); checkWin(); }, 430);
+      } else {
+        const penalty = 35;
+        state.score = Math.max(0, state.score - penalty);
+        beep(120, 0.12, "sawtooth");
+        premiumShake();
+        setMessage(t("wrong"));
+        renderStats();
+        showScoreFloat(`-${penalty}`, false);
+        animateScoreChange();
+      }
+    }
+
+    async function animateFoundWord(positions) {
+      for (let i = 0; i < positions.length; i++) {
+        const pos = positions[i];
+        const tile = gridEl.children[pos];
+        tile?.classList.add("burst");
+        burstConfettiFromTile(tile, 28);
+        chunkyLockSound(i);
+        haptic([10, 18]);
+        await sleep(92);
+      }
+      setTimeout(() => positions.forEach(pos => gridEl.children[pos]?.classList.remove("burst")), 1100);
+    }
+
+    function animateWordCardAway(wordId) {
+      const card = wordListEl.querySelector(`[data-word-id='${wordId}']`);
+      if (!card) return;
+      card.classList.add("found", "just-found");
+      setTimeout(() => card.classList.remove("just-found"), 480);
+    }
+
+    function burstConfettiFromTile(tile, amount = 18) {
+      if (!tile) return;
+      const rect = tile.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const scale = Math.min(window.innerWidth, window.innerHeight) / 600;
+      for (let i = 0; i < amount; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        const angle = Math.random() * Math.PI * 2;
+        const distance = (110 + Math.random() * 220) * scale;
+        piece.style.left = cx + "px";
+        piece.style.top = cy + "px";
+        piece.style.background = rand(["var(--primary)", "var(--primary-2)", "var(--warn)", "var(--danger)"]);
+        piece.style.setProperty("--tx", Math.cos(angle) * distance + "px");
+        piece.style.setProperty("--ty", Math.sin(angle) * distance + "px");
+        piece.style.setProperty("--rot", (Math.random() * 720 - 360) + "deg");
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 1000);
+      }
+    }
+
+    function launchFireworks(rounds = 14) {
+      const scale = Math.min(window.innerWidth, window.innerHeight) / 600;
+      for (let r = 0; r < rounds; r++) {
+        setTimeout(() => {
+          const x = 40 + Math.random() * (window.innerWidth - 80);
+          const y = 40 + Math.random() * (window.innerHeight * 0.72);
+          const sparks = 64;
+          for (let i = 0; i < sparks; i++) {
+            const spark = document.createElement("div");
+            spark.className = "firework-spark";
+            const angle = (Math.PI * 2 * i) / sparks + Math.random() * 0.2;
+            const distance = (150 + Math.random() * 260) * scale;
+            spark.style.setProperty("--x", x + "px");
+            spark.style.setProperty("--y", y + "px");
+            spark.style.background = rand(["var(--primary)", "var(--primary-2)", "var(--warn)", "var(--danger)", "#ffffff"]);
+            spark.style.setProperty("--tx", Math.cos(angle) * distance + "px");
+            spark.style.setProperty("--ty", Math.sin(angle) * distance + "px");
+            document.body.appendChild(spark);
+            setTimeout(() => spark.remove(), 1300);
+          }
+          // Fireworks are visual-only; no sound here.
+        }, r * 150);
+      }
+    }
+
+    function danceGridLetters() {
+      [...gridEl.children].forEach((tile, i) => {
+        tile.style.setProperty("--vx", (Math.random() * 44 - 22) + "px");
+        tile.style.setProperty("--vy", (Math.random() * 44 - 22) + "px");
+        tile.style.setProperty("--vr", (Math.random() * 80 - 40) + "deg");
+        tile.style.animationDelay = (Math.random() * 320) + "ms";
+        tile.classList.add("victory-dance");
+        setTimeout(() => {
+          tile.classList.remove("victory-dance");
+          tile.style.animationDelay = "";
+        }, 1700);
+      });
+    }
+
+    function doMenaceShuffle() {
+      if (!state.gameActive || state.gameOver || state.revealInProgress || !state.lockedSetup?.menace || state.menaceInProgress) return;
+      if (ghost || state.selectedWord !== null || state.selectedTool !== null) {
+        setTimeout(doMenaceShuffle, 1200);
+        return;
+      }
+
+      state.menaceInProgress = true;
+      state.nextReshuffleAt = Date.now() + (state.lockedSetup.reshuffleInterval || 30) * 1000;
+      setMessage(t("menaceEvent"));
+
+      const wrap = gridEl.closest(".grid-wrap");
+      wrap?.classList.add("menace-active");
+
+      const lockedPositions = new Set();
+      const solvedWords = new Set();
+      state.words.forEach((word, id) => {
+        if (word.found) {
+          solvedWords.add(id);
+          state.placements[id]?.positions.forEach(pos => lockedPositions.add(pos));
+        }
+      });
+
+      const shuffledPositions = state.cells
+        .map((cell, i) => i)
+        .filter(i => !lockedPositions.has(i));
+
+      shuffledPositions.forEach(i => {
+        const tile = gridEl.children[i];
+        if (!tile) return;
+        tile.classList.remove("reshuffle-in", "reshuffle-out");
+        tile.style.setProperty("--shuffle-delay", `${Math.floor(Math.random() * 160)}ms`);
+        void tile.offsetWidth;
+        tile.classList.add("reshuffle-out");
+      });
+
+      beep(180, 0.045, "sine", 0.018);
+
+      setTimeout(() => {
+        const difficulty = DIFFICULTY[state.lockedSetup.difficulty];
+        const lockedCells = new Map();
+        lockedPositions.forEach(pos => lockedCells.set(pos, { ...state.cells[pos], found: true, hidden: false }));
+
+        state.cells = createEmptyGrid(state.gridSize);
+        lockedCells.forEach((cell, pos) => { state.cells[pos] = cell; });
+        state.placements = state.placements.map((placement, id) => solvedWords.has(id) ? placement : null);
+
+        state.words.forEach((word, id) => {
+          if (!word.found) placeWordAvoidingLocked(word, id, lockedPositions);
+        });
+
+        fillRandomLetters(state.lockedSetup.mode);
+        hideCells(difficulty.hidden);
+        lockedCells.forEach((cell, pos) => { state.cells[pos] = { ...cell, hidden: false, found: true }; });
+
+        renderGrid();
+        renderWords();
+        renderStats();
+
+        const visibleUnlockedPositions = state.cells
+          .map((cell, i) => ({ cell, i }))
+          .filter(({ i }) => !lockedPositions.has(i))
+          .map(({ i }) => i);
+
+        visibleUnlockedPositions.forEach(i => {
+          const tile = gridEl.children[i];
+          if (!tile) return;
+          tile.classList.remove("reshuffle-in", "reshuffle-out");
+          tile.style.setProperty("--shuffle-delay", `${Math.floor(Math.random() * 190)}ms`);
+          void tile.offsetWidth;
+          tile.classList.add("reshuffle-in");
+        });
+
+        setTimeout(() => {
+          visibleUnlockedPositions.forEach(i => {
+            const tile = gridEl.children[i];
+            if (!tile) return;
+            tile.classList.remove("reshuffle-in", "reshuffle-out");
+            tile.style.removeProperty("--shuffle-delay");
+          });
+          wrap?.classList.remove("menace-active");
+          state.menaceInProgress = false;
+          beep(260, 0.045, "sine", 0.016);
+        }, 650);
+      }, 560);
+    }
+
+    function checkWin() {
+      if (state.words.every(w => w.found)) {
+        state.gameOver = true;
+        state.gameActive = false;
+        clearInterval(state.timer);
+        clearMenaceTimer();
+
+        state.score += state.clues * 50;
+        if (state.profile.level >= 3) state.score = Math.round(state.score * 1.05);
+
+        renderStats();
+        saveHighScore();
+        awardProgress(true);
+
+        giveUpBtn.disabled = true;
+        state.lockedSetup = null;
+        updateSetupSummary();
+
+        state.musicIntensity = 1;
+
+        // Celebration stays active until new game
+        showCelebration("Victory!", `Score: ${state.score} | XP: +${xpForRun(true)} | Level: ${state.profile.level}`, false);
+        setTimeout(() => openProfile(false), 750);
+
+        // Continuous fireworks loop
+        const fireworkLoop = () => {
+          if (!state.gameOver) return;
+          launchFireworks(10);
+          fireworkLoopId = setTimeout(fireworkLoop, 2000);
+        };
+        fireworkLoop();
+
+        danceGridLetters();
+
+        beep(988, 0.1, "triangle");
+        setTimeout(() => beep(1318, 0.12, "triangle"), 120);
+      }
+    }
+
+    function tick() {
+      if (state.gameOver) return;
+      state.time++;
+      renderStats();
+    }
+
+    function showCelebration(title, sub, autoHide = true) {
+      celebrationTitle.textContent = title;
+      celebrationSub.textContent = sub;
+      celebration.classList.add("show");
+      if (autoHide) setTimeout(() => celebration.classList.remove("show"), 1450);
+    }
+
+    async function revealSolutions() {
+      state.revealInProgress = true;
+      state.awaitingReveal = false;
+      renderGrid(); renderWords();
+      for (let w = 0; w < state.placements.length; w++) {
+        const placement = state.placements[w];
+        await sleep(180);
+        if (!placement) continue;
+        for (const pos of placement.positions) {
+          state.cells[pos].hidden = false;
+          state.cells[pos].found = true;
+          const tile = gridEl.children[pos];
+          tile.classList.remove("hidden");
+          tile.classList.add("solution");
+          burstConfettiFromTile(tile, 18);
+          beep(500 + Math.random() * 420, 0.035, "triangle");
+          await sleep(85);
+        }
+        state.words[w].found = true;
+        renderWords();
+        await sleep(160);
+      }
+      renderGrid(); renderWords(); renderStats();
+      state.revealInProgress = false;
+    }
+
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+    async function endGame(title = t("reveal"), sub = t("revealSub"), save = false) {
+      if (!state.gameActive && !state.timer) return;
+      clearInterval(state.timer);
+      clearMenaceTimer();
+      state.timer = null;
+      state.gameOver = true;
+      state.gameActive = false;
+      giveUpBtn.disabled = true;
+
+      document.body.style.filter = "grayscale(1) brightness(0.85)";
+
+      showCelebration(title, sub);
+      setMessage(`${sub} ${t("revealWatch")}`);
+
+      if (save) saveHighScore();
+      awardProgress(false);
+
+      await revealSolutions();
+
+      state.lockedSetup = null;
+      updateSetupSummary();
+    }
+
+    function getConfigKey(setup = state.lockedSetup) {
+      if (!setup) return "pending";
+      const playStyle = setup.playStyle || "free";
+      if (playStyle === "challenge") return ["challenge", setup.audience || "child", setup.challengeIndex ?? currentChallengeIndex(setup.audience || "child"), setup.lang || state.lang, setup.mode, setup.difficulty, setup.size, setup.count].join("|");
+      return ["free", setup.lang || state.lang, setup.mode, setup.difficulty, setup.size, setup.count].join("|");
+    }
+
+    function getAllScores() {
+      return JSON.parse(localStorage.getItem("wordingleScores") || "[]");
+    }
+
+    function saveHighScore() {
+      if (!state.lockedSetup) return;
+      const scores = getAllScores();
+      scores.push({
+        playStyle: state.lockedSetup.playStyle || "free",
+        audience: state.lockedSetup.audience || "child",
+        challengeIndex: state.lockedSetup.challengeIndex,
+        score: state.score,
+        time: state.time,
+        mode: state.lockedSetup.mode,
+        difficulty: state.lockedSetup.difficulty,
+        count: state.lockedSetup.count,
+        size: state.gridSize,
+        lang: state.lang,
+        configKey: getConfigKey(),
+        date: new Date().toLocaleDateString()
+      });
+      scores.sort((a, b) => b.score - a.score || a.time - b.time);
+      localStorage.setItem("wordingleScores", JSON.stringify(scores.slice(0, 60)));
+      renderHighScores();
+      renderTopHighScore();
+    }
+
+    function currentConfigFromSetupControls() {
+      const playStyle = playStyleSelect.value || "challenge";
+      if (playStyle === "challenge") {
+        const level = challengeSetup();
+        return { playStyle: "challenge", audience: audienceSelect.value || "child", challengeIndex: currentChallengeIndex(audienceSelect.value || "child"), lang: languageSelect.value || state.lang, mode: level.mode, difficulty: level.difficulty, size: level.size, count: level.count };
+      }
+      return {
+        playStyle: "free",
+        lang: languageSelect.value || state.lang,
+        mode: modeSelect.value || "kids",
+        difficulty: difficultySelect.value || "normal",
+        size: Number(gridSizeSelect.value || state.gridSize || 10),
+        count: Number(wordCountSelect.value || 8)
+      };
+    }
+
+    function scoresForCurrentConfig() {
+      const setup = state.lockedSetup || currentConfigFromSetupControls();
+      const key = getConfigKey(setup);
+      return getAllScores()
+        .filter(s => (s.configKey || [s.lang || "en", s.mode, s.difficulty || "normal", s.size, s.count || 8].join("|")) === key)
+        .sort((a, b) => b.score - a.score || a.time - b.time)
+        .slice(0, 10);
+    }
+
+    function renderTopHighScore() {
+      const best = scoresForCurrentConfig()[0];
+      bestStat.textContent = best ? `${best.score}` : "—";
+    }
+
+    function renderHighScores() {
+      const scores = scoresForCurrentConfig();
+      leaderboardSub.textContent = t("topScoresFor");
+      leaderboardList.innerHTML = scores.length ? "" : `<p>${t("noConfigScore")}</p>`;
+      scores.forEach((s, i) => {
+        const row = document.createElement("div");
+        row.className = "score-row";
+        const mode = OPTIONS[state.lang].modes[s.mode] || s.mode;
+        row.innerHTML = `<span>#${i + 1} · ${mode} · ${s.size}×${s.size} · ${formatTime(s.time || 0)}</span><strong>${s.score}</strong>`;
+        leaderboardList.appendChild(row);
+      });
+      highscoresEl.innerHTML = leaderboardList.innerHTML;
+    }
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = String(seconds % 60).padStart(2, "0");
+      return `${min}:${sec}`;
+    }
+
+    function newGame() {
+      clearInterval(state.timer);
+      clearMenaceTimer();
+      state.menaceInProgress = false;
+      stopFireworks();
+      document.body.style.filter = "";
+      celebration.classList.remove("show");
+
+      // Capture the user's setup BEFORE applying language, because applyLanguage()
+      // rebuilds the select options and can otherwise reset grid size / word count.
+      const requestedPlayerName = playerNameInput.value.trim() || state.profile.name || "Player";
+      const playStyle = playStyleSelect.value || "challenge";
+      const challenge = playStyle === "challenge";
+      const challengeValues = challenge ? challengeSetup() : null;
+      const requestedSetup = {
+        playStyle,
+        audience: audienceSelect.value || "child",
+        challengeIndex: challenge ? currentChallengeIndex(audienceSelect.value || "child") : null,
+        lang: languageSelect.value,
+        mode: challenge ? challengeValues.mode : modeSelect.value,
+        difficulty: challenge ? challengeValues.difficulty : difficultySelect.value,
+        size: challenge ? challengeValues.size : Number(gridSizeSelect.value),
+        count: challenge ? challengeValues.count : Number(wordCountSelect.value),
+        menace: challenge || menaceSelect.value === "on" || modeSelect.value === "menace",
+        reshuffleInterval: challenge ? challengeValues.interval : 30,
+        music: musicSelect.value
+      };
+
+      state.lang = requestedSetup.lang;
+      localStorage.setItem("wordingleLang", state.lang);
+      applyLanguage();
+
+      modeSelect.value = requestedSetup.mode;
+      difficultySelect.value = requestedSetup.difficulty;
+      gridSizeSelect.value = String(requestedSetup.size);
+      wordCountSelect.value = String(requestedSetup.count);
+      menaceSelect.value = requestedSetup.menace ? "on" : "off";
+
+      state.profile.name = requestedPlayerName;
+      state.profile.lastAudience = requestedSetup.audience;
+      saveProfile();
+      state.music = requestedSetup.music;
+      localStorage.setItem("wordingleMusic", state.music);
+      startMusic(state.music);
+      state.lockedSetup = requestedSetup;
+      const difficulty = DIFFICULTY[state.lockedSetup.difficulty];
+      state.gridSize = state.lockedSetup.size;
+      state.cells = createEmptyGrid(state.gridSize);
+      state.words = chooseWords(state.lockedSetup.mode, state.lockedSetup.count, state.gridSize);
+      state.placements = [];
+      state.score = 0;
+      state.musicIntensity = 0;
+      state.clues = difficulty.clues;
+      applyProfilePerks();
+      state.time = 0;
+      state.awaitingReveal = false;
+      state.selectedWord = null;
+      state.gameOver = false;
+      state.gameActive = true;
+      state.revealInProgress = false;
+      state.menaceInProgress = false;
+      state.words = state.words.filter((w, i) => placeWord(w, i));
+      fillRandomLetters(state.lockedSetup.mode);
+      hideCells(difficulty.hidden);
+      giveUpBtn.disabled = false;
+      updateSetupSummary();
+      renderGrid(); renderWords(); renderStats(); renderHighScores(); renderTopHighScore();
+      setMessage(t("messagePlaying"));
+      setupModal.classList.remove("show");
+      state.timer = setInterval(tick, 1000);
+      clearMenaceTimer();
+      if (state.lockedSetup.menace) {
+        state.nextReshuffleAt = Date.now() + state.lockedSetup.reshuffleInterval * 1000;
+        state.menaceTimer = setInterval(doMenaceShuffle, state.lockedSetup.reshuffleInterval * 1000);
+      } else state.nextReshuffleAt = null;
+      beep(620, 0.08, "triangle");
+    }
+
+    setupBtn.addEventListener("click", openSetup);
+    currentUserChip.addEventListener("click", () => openProfile(false));
+    closeProfileBtn.addEventListener("click", () => profileModal.classList.remove("show"));
+    profilePlayBtn.addEventListener("click", () => { profileModal.classList.remove("show"); openSetup(); });
+    profileNextBtn.addEventListener("click", () => {
+      profileModal.classList.remove("show");
+      playStyleSelect.value = "challenge";
+      applyPlayStyleVisibility();
+      newGame();
+    });
+    profileResetBtn.addEventListener("click", () => {
+      if (!confirm(t("resetConfirmOne"))) return;
+      if (!confirm(t("resetConfirmTwo"))) return;
+      state.profile = { ...DEFAULT_PROFILE, logo: generateLogo("Player") };
+      playerNameInput.value = state.profile.name;
+      localStorage.setItem("wordingleProfile", JSON.stringify(state.profile));
+      renderProfile();
+      populateSelects();
+      renderTopHighScore();
+    });
+    startGameBtn.addEventListener("click", newGame);
+    continueChallengeBtn.addEventListener("click", () => { playStyleSelect.value = "challenge"; newGame(); });
+    freePlayBtn.addEventListener("click", () => {
+      if (!freePlayUnlocked()) return setMessage(t("freePlayLocked"));
+      playStyleSelect.value = "free";
+      document.body.classList.remove("challenge-aesthetic");
+      applyPlayStyleVisibility();
+    });
+    challengeModeBtn.addEventListener("click", () => {
+      playStyleSelect.value = "challenge";
+      document.body.classList.add("challenge-aesthetic");
+      applyPlayStyleVisibility();
+    });
+    document.getElementById("closeSetupBtn").addEventListener("click", closeSetup);
+    leaderboardBtn.addEventListener("click", () => { renderHighScores(); leaderboardModal.classList.add("show"); });
+    document.getElementById("closeLeaderboardBtn").addEventListener("click", () => leaderboardModal.classList.remove("show"));
+    helpBtn.addEventListener("click", () => helpModal.classList.add("show"));
+    document.getElementById("closeHelpBtn").addEventListener("click", () => helpModal.classList.remove("show"));
+    settingsBtn.addEventListener("click", () => settingsModal.classList.add("show"));
+    document.getElementById("closeSettingsBtn").addEventListener("click", () => settingsModal.classList.remove("show"));
+    settingsSoundBtn.addEventListener("click", () => soundBtn.click());
+    giveUpBtn.addEventListener("click", () => endGame(t("reveal"), t("revealSub"), false));
+    document.getElementById("themeBtn").addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("wordingleTheme", document.body.classList.contains("dark") ? "dark" : "light");
+      updateIconButtons();
+    });
+    document.getElementById("randomThemeBtn").addEventListener("click", randomTheme);
+    document.getElementById("modalRandomThemeBtn").addEventListener("click", randomTheme);
+    resetProfileBtn.addEventListener("click", () => {
+      if (!confirm(t("resetConfirmOne"))) return;
+      if (!confirm(t("resetConfirmTwo"))) return;
+      state.profile = { ...DEFAULT_PROFILE, logo: generateLogo("Player") };
+      playerNameInput.value = state.profile.name;
+      localStorage.setItem("wordingleProfile", JSON.stringify(state.profile));
+      populateSelects();
+      renderProfile();
+      renderTopHighScore();
+    });
+    musicSelect.addEventListener("change", () => {
+      state.music = musicSelect.value;
+      localStorage.setItem("wordingleMusic", state.music);
+      startMusic(state.music);
+    });
+    musicVolumeSlider.addEventListener("input", () => {
+      state.musicVolume = Number(musicVolumeSlider.value) / 100;
+      localStorage.setItem("wordingleMusicVolume", musicVolumeSlider.value);
+      setAudioVolumes();
+    });
+    sfxVolumeSlider.addEventListener("input", () => {
+      state.sfxVolume = Number(sfxVolumeSlider.value) / 100;
+      localStorage.setItem("wordingleSfxVolume", sfxVolumeSlider.value);
+    });
+    playerNameInput.addEventListener("input", () => {
+      const nextName = playerNameInput.value.trim() || "Player";
+      state.profile.name = nextName;
+      if (!state.profile.logo || state.profile.logo.initials !== initialsForName(nextName)) state.profile.logo = generateLogo(nextName);
+      renderProfile();
+    });
+    languageSelect.addEventListener("change", () => {
+      const nextLang = languageSelect.value;
+      state.lang = nextLang;
+      localStorage.setItem("wordingleLang", state.lang);
+      applyLanguage();
+      renderTopHighScore();
+    });
+    [modeSelect, difficultySelect, gridSizeSelect, wordCountSelect, menaceSelect, playStyleSelect, audienceSelect].forEach(el => el.addEventListener("change", () => { applyPlayStyleVisibility(); renderTopHighScore(); }));
+    soundBtn.addEventListener("click", e => {
+      state.sound = !state.sound;
+      updateIconButtons();
+      if (!state.sound) stopMusic();
+      else {
+        beep(520, 0.05);
+        startMusic(state.music);
+      }
+    });
+    function stopMusic() {
+      if (state.musicTimer) clearInterval(state.musicTimer);
+      state.musicTimer = null;
+      state.musicStep = 0;
+    }
+
+    function setAudioVolumes() {
+      if (!masterGain) return;
+      musicBus.gain.setTargetAtTime(state.musicVolume, audioCtx.currentTime, 0.05);
+      reverbBus.gain.setTargetAtTime(state.musicVolume * 0.28, audioCtx.currentTime, 0.05);
+      delayBus.gain.setTargetAtTime(state.musicVolume * 0.16, audioCtx.currentTime, 0.05);
+      shimmerGain.gain.setTargetAtTime(state.musicVolume * 0.1, audioCtx.currentTime, 0.05);
+    }
+
+    function startMusic(type) {
+      stopMusic();
+      if (!state.sound || type === "off") return;
+      ensureAudio();
+      setAudioVolumes();
+
+      const drones = {
+        focus: { root: 110, mode: "major", interval: 6500, volume: 0.012 },
+        space: { root: 73, mode: "minor", interval: 8200, volume: 0.014 },
+        classical: { root: 98, mode: "major", interval: 7600, volume: 0.011 },
+        festive: { root: 131, mode: "major", interval: 7000, volume: 0.010 },
+        kids: { root: 131, mode: "major", interval: 7200, volume: 0.010 },
+        techno: { root: 82, mode: "minor", interval: 6800, volume: 0.012 }
+      };
+      const d = drones[type] || drones.focus;
+      state.musicTimer = setInterval(() => {
+        const now = audioCtx.currentTime + 0.05;
+        const drift = 1 + (Math.sin(state.musicStep * 0.7) * 0.015);
+        const intensity = 0.75 + (state.musicIntensity || 0) * 0.25;
+        playPad(d.root * drift, now, d.interval / 1000 * 1.35, d.mode, d.volume * intensity);
+        if (state.musicStep % 3 === 0) playNote(d.root * 2 * drift, now + 0.6, 2.4, "sine", d.volume * 0.55 * intensity, 0.15, 900, 0.65, 0.5);
+        state.musicStep++;
+      }, d.interval);
+    }
+
+    function updateMusicIntensity() {
+      if (!state.words.length) return;
+      state.musicIntensity = state.words.filter(w => w.found).length / state.words.length;
+    }
+
+    function showScoreFloat(text, positive = true) {
+      const el = document.createElement("div");
+      el.className = `score-float ${positive ? "positive" : "negative"}`;
+      el.textContent = text;
+      const rect = scoreStat.getBoundingClientRect();
+      el.style.left = rect.left + rect.width / 2 + "px";
+      el.style.top = rect.bottom + 8 + "px";
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 950);
+    }
+
+    function animateScoreChange() {
+      scoreStat.classList.remove("score-pop");
+      void scoreStat.offsetWidth;
+      scoreStat.classList.add("score-pop");
+      setTimeout(() => scoreStat.classList.remove("score-pop"), 460);
+    }
+
+    function premiumShake() {
+      document.body.classList.remove("shake-soft");
+      void document.body.offsetWidth;
+      document.body.classList.add("shake-soft");
+      setTimeout(() => document.body.classList.remove("shake-soft"), 300);
+    }
+
+    function premiumSatisfactionPulse() {
+      document.body.classList.remove("slowmo");
+      void document.body.offsetWidth;
+      document.body.classList.add("slowmo");
+      setTimeout(() => document.body.classList.remove("slowmo"), 560);
+    }
+
+    function runSmokeTests() {
+      console.group("Wordingle smoke tests");
+      console.assert(document.styleSheets.length > 0, "CSS should parse after menace animation edits");
+      console.assert(typeof checkWin === "function", "checkWin should be a valid function");
+      console.assert(typeof burstConfettiFromTile === "function", "Confetti function should be defined");
+      console.assert(DIRECTIONS.length === 4, "Expected four supported directions");
+      console.assert(DIFFICULTY.foundation.hidden === 0, "Foundation difficulty should show all letters");
+      console.assert(DIFFICULTY.normal.clues === 12, "Normal difficulty should start with 12 clues");
+      console.assert(isModeUnlocked("kids") === true, "Kids mode should always be unlocked");
+      console.assert(typeof doMenaceShuffle === "function", "Menace shuffle should be available");
+      console.assert("menaceInProgress" in state, "Menace mode should expose an in-progress lock");
+      console.assert(typeof challengeSetup === "function", "Challenge setup should be available");
+      console.assert(Array.isArray(challengeLevels("child")), "Challenge levels should be available");
+      console.assert(typeof freePlayUnlocked === "function", "Free play unlock helper should exist");
+      console.assert(document.getElementById("setupModalCard"), "Setup modal card should exist");
+      console.assert(typeof chunkyLockSound === "function", "Chunky lock sound should exist");
+      console.assert(typeof haptic === "function", "Haptic helper should exist");
+      const originalGrid = gridSizeSelect.value;
+      const originalCount = wordCountSelect.value;
+      gridSizeSelect.value = "20";
+      wordCountSelect.value = "12";
+      populateSelects();
+      console.assert(gridSizeSelect.value === "20", "populateSelects should preserve selected grid size");
+      console.assert(wordCountSelect.value === "12", "populateSelects should preserve selected word count");
+      gridSizeSelect.value = originalGrid;
+      wordCountSelect.value = originalCount;
+      console.assert(I18N.ga.words === "Focail", "Irish interface labels should be available");
+      const previousSize = state.gridSize;
+      state.gridSize = 5;
+      console.assert(index(2, 3) === 13, "Index helper should convert row/col correctly");
+      console.assert(inBounds(4, 4) === true, "Bottom-right cell should be in bounds");
+      console.assert(inBounds(5, 0) === false, "Row outside grid should be out of bounds");
+      state.gridSize = previousSize;
+      console.groupEnd();
+    }
+
+    if (localStorage.getItem("wordingleTheme") === "dark") document.body.classList.add("dark");
+    try {
+      const savedAccentTheme = JSON.parse(localStorage.getItem("wordingleAccentTheme") || "null");
+      if (savedAccentTheme) applyAccentTheme(savedAccentTheme);
+    } catch (error) {
+      console.warn("Could not load saved Wordingle accent theme", error);
+    }
+    populateSelects();
+    musicSelect.value = state.music;
+    musicVolumeSlider.value = Math.round(state.musicVolume * 100);
+    sfxVolumeSlider.value = Math.round(state.sfxVolume * 100);
+    playerNameInput.value = state.profile.name;
+    applyLanguage();
+    if (localStorage.getItem("wordingleProfile") && state.profile.name !== "Player") {
+      document.body.classList.add("challenge-aesthetic");
+      playStyleSelect.value = "challenge";
+      applyPlayStyleVisibility();
+      renderChallengePath(setupChallengePathEl);
+      if (!state.profile.seenProfile) setTimeout(() => openProfile(true), 350);
+    }
+    runSmokeTests();
+    state.cells = createEmptyGrid(state.gridSize);
+    fillRandomLetters("kids");
+    renderGrid(); renderWords(); renderStats(); renderHighScores(); renderTopHighScore(); updateSetupSummary();
+    window.addEventListener("resize", () => {
+      if (state.cells.length) {
+        renderGrid();
+        fitWordPills();
+      }
+    });
+  </script>
+</body>
+</html>
