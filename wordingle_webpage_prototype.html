@@ -333,7 +333,7 @@
       display: inline-flex;
       justify-content: center;
       align-items: center;
-      padding: 0;
+      padding: 2px 1px;
       background: transparent;
       border: 0;
       border-radius: 999px;
@@ -359,7 +359,8 @@
       justify-content: center;
       max-width: 100%;
       width: 100%;
-      padding: 0.34em 0.82em;
+      min-height: 1.9em;
+      padding: 0.48em 0.95em;
       border-radius: 999px;
       border: 1px solid var(--tile-border);
       background: var(--panel-solid);
@@ -425,13 +426,13 @@
     .audio-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tile-border); }
     input[type="range"] { accent-color: var(--primary); width: 100%; }
     .profile-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
-    .profile-tile { background: var(--panel-solid); border: 1px solid var(--tile-border); border-radius: 14px; padding: 9px; }
-    .profile-tile span { display:block; color: var(--muted); font-size: .66rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
-    .profile-tile strong { display:block; margin-top: 2px; font-size: 1rem; }
+    .profile-tile { background: var(--panel-solid); border: 1px solid var(--tile-border); border-radius: 14px; padding: 7px 8px; min-width: 0; }
+    .profile-tile span { display:block; color: var(--muted); font-size: .58rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .profile-tile strong { display:block; margin-top: 1px; font-size: .94rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .unlock-note { color: var(--muted); font-size: .78rem; line-height: 1.35; margin-top: 10px; }
     .perk-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
     .perk-pill { border-radius:999px; padding:6px 9px; background: color-mix(in srgb, var(--primary) 12%, var(--panel-solid)); border:1px solid var(--tile-border); font-size:.72rem; font-weight:800; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    .modal-actions { display: flex; justify-content: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
     .leaderboard-list { display: grid; gap: 8px; max-height: min(52vh, 430px); overflow: hidden; }
     .help-copy { display: grid; gap: 10px; }
     .bank-progress { display: none !important; }
@@ -443,7 +444,7 @@
     .profile-logo span { position:relative; z-index:2; text-shadow:0 3px 12px rgba(0,0,0,.25); }
     .profile-name-display { font-size: clamp(1.7rem, 5vw, 3.1rem); font-weight:1000; letter-spacing:-0.08em; line-height:.9; background: linear-gradient(135deg, var(--primary), var(--primary-2), var(--warn)); -webkit-background-clip:text; color:transparent; }
     .profile-subtitle { color: var(--muted); font-weight:800; font-size:.9rem; }
-    .profile-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-top:14px; }
+    .profile-grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:6px; margin-top:10px; }
     .challenge-path { display: grid; gap: 8px; margin-top: 14px; }
     .challenge-level { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 9px; border-radius: 14px; background: var(--panel-solid); border: 1px solid var(--tile-border); color: var(--text); }
     .challenge-level.current { outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent); }
@@ -451,7 +452,13 @@
     .challenge-badge { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: white; font-weight: 1000; }
     .challenge-title { font-weight: 950; }
     .challenge-meta { color: var(--muted); font-size: .75rem; margin-top: 2px; }
-    .profile-grid .profile-tile strong { font-size: 1.15rem; }
+    .profile-grid .profile-tile strong { font-size: 0.98rem; }
+    #profileModal .modal-head { display: none; }
+    #profileModal .profile-hero { margin: 0 0 10px; gap: 7px; }
+    #profileModal .profile-logo { width: 82px; height: 82px; border-radius: 26px; font-size: 1.65rem; }
+    #profileModal .profile-name-display { font-size: clamp(1.65rem, 4.5vw, 2.65rem); }
+    #profileModal .modal-actions { justify-content: center; }
+    #profilePlayBtn { display: none !important; }
     .bank-progress { display:grid; gap:8px; margin-top:14px; }
     .bank-row { display:grid; grid-template-columns: 88px 1fr auto; gap:8px; align-items:center; font-size:.8rem; color:var(--muted); }
     .bank-bar { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--muted) 18%, transparent); overflow:hidden; }
@@ -519,27 +526,28 @@
       .top-actions {
         width: 100%;
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 5px;
+        grid-template-columns: 1.6fr repeat(6, 30px) 34px;
+        gap: 4px;
         overflow: hidden;
+        align-items: center;
       }
       .top-actions .btn { min-width: 0; }
       .user-chip {
-        grid-column: span 2;
+        grid-column: auto;
         justify-content: center;
-        font-size: 0.68rem;
-        padding: 6px 6px;
+        font-size: 0.64rem;
+        padding: 6px 5px;
         overflow: hidden;
         text-overflow: ellipsis;
       }
       .user-chip small { display: none; }
       .btn { padding: 6px 7px; font-size: 0.72rem; }
       .icon-btn { width: 30px; height: 30px; padding: 0; font-size: .9rem; }
-      #helpBtn { font-size: 0; }
+      #helpBtn { font-size: 0; width: 30px; height: 30px; padding: 0; }
       #helpBtn::before { content: "?"; font-size: .85rem; }
-      #giveUpBtn { font-size: 0; }
+      #giveUpBtn { font-size: 0; width: 30px; height: 30px; padding: 0; }
       #giveUpBtn::before { content: "✕"; font-size: .85rem; }
-      #setupBtn { font-size: 0; }
+      #setupBtn { font-size: 0; width: 34px; height: 30px; padding: 0; }
       #setupBtn::before { content: "▶"; font-size: .85rem; }
       .stats-top { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
       .stat { padding: 5px 6px; border-radius: 12px; }
@@ -556,7 +564,7 @@
       }
       .side-right h2 { font-size: .78rem; margin-bottom: 4px; }
       .word-list { padding: 4px; gap: var(--word-gap, 4px); align-content: center; }
-      .word-card strong { padding: .25em .58em; }
+      .word-card strong { padding: .44em .82em; min-height: 2em; line-height: 1.12; }
       .side-right h2:nth-of-type(2), .highscores { display: none; }
       .modal-backdrop { padding: 8px; place-items: center; }
       .modal {
@@ -845,10 +853,10 @@
 
     const DIFFICULTY = {
       foundation: { hidden: 0, clues: 0, multiplier: 0.75, noClues: true },
-      easy: { hidden: 0.35, clues: 18, multiplier: 1 },
-      normal: { hidden: 0.55, clues: 12, multiplier: 1.25 },
-      hard: { hidden: 0.72, clues: 8, multiplier: 1.6 },
-      expert: { hidden: 0.86, clues: 5, multiplier: 2.1 }
+      easy: { hidden: 0.03, clues: 0, multiplier: 1 },
+      normal: { hidden: 0.05, clues: 0, multiplier: 1.25 },
+      hard: { hidden: 0.07, clues: 0, multiplier: 1.6 },
+      expert: { hidden: 0.09, clues: 0, multiplier: 2.1 }
     };
 
     const THEMES = [
@@ -1354,7 +1362,7 @@
       const audience = audienceSelect?.value || state.profile.lastAudience || "child";
       const levels = challengeLevels(audience);
       const current = currentChallengeIndex(audience);
-      target.innerHTML = `<h2>${t("challengePlay")}</h2>` + levels.map((level, i) => {
+      target.innerHTML = `<h2>${state.lang === "ga" ? "Dul chun cinn dúshláin" : "Challenge mode progress"}</h2>` + levels.map((level, i) => {
         const locked = i > current;
         const scoreKey = getConfigKey({ playStyle: "challenge", audience, challengeIndex: i, lang: state.lang, mode: level.mode, difficulty: level.difficulty, size: level.size, count: level.count });
         const best = getAllScores().filter(s => s.configKey === scoreKey).sort((a,b) => b.score - a.score || a.time - b.time)[0];
@@ -1437,7 +1445,7 @@
 
     function renderProfileDetails() {
       if (!profileDetailGrid) return;
-      const tiles = [[t("level"), state.profile.level], [t("xp"), state.profile.xp], [t("runs"), state.profile.runs], [t("wins"), state.profile.wins], [t("totalTime"), formatTime(state.profile.totalTime || 0)], [t("wordsSolved"), state.profile.wordsSolved || 0]];
+      const tiles = [[t("runs"), state.profile.runs], [t("wins"), state.profile.wins], [t("totalTime"), formatTime(state.profile.totalTime || 0)], [t("wordsSolved"), state.profile.wordsSolved || 0]];
       profileDetailGrid.innerHTML = tiles.map(([label, value]) => `<div class="profile-tile"><span>${label}</span><strong>${value}</strong></div>`).join("");
       if (bankProgressEl) bankProgressEl.innerHTML = "";
     }
@@ -1604,7 +1612,30 @@
       const chars = mode === "chaos" ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" : "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       for (const cell of state.cells) if (!cell.letter) cell.letter = chars[Math.floor(Math.random() * chars.length)];
     }
-    function hideCells(hiddenRatio) { for (const cell of state.cells) cell.hidden = Math.random() < hiddenRatio; }
+    function hideCells(hiddenRatio) {
+      for (const cell of state.cells) cell.hidden = false;
+      if (!hiddenRatio) return;
+      const target = Math.floor(state.cells.length * hiddenRatio);
+      const candidates = shuffle(state.cells.map((_, i) => i));
+      let hiddenCount = 0;
+      for (const pos of candidates) {
+        if (hiddenCount >= target) break;
+        const row = Math.floor(pos / state.gridSize);
+        const col = pos % state.gridSize;
+        let hiddenNeighbours = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (!dr && !dc) continue;
+            const r = row + dr;
+            const c = col + dc;
+            if (inBounds(r, c) && state.cells[index(r, c)].hidden) hiddenNeighbours++;
+          }
+        }
+        if (hiddenNeighbours >= 2) continue;
+        state.cells[pos].hidden = true;
+        hiddenCount++;
+      }
+    }
     function tileMetricsFor(size) {
       const wrap = gridEl.closest(".grid-wrap");
       const availableWidth = Math.max(180, (wrap?.clientWidth || window.innerWidth) - 16);
@@ -2562,7 +2593,7 @@
       console.assert(typeof burstConfettiFromTile === "function", "Confetti function should be defined");
       console.assert(DIRECTIONS.length === 4, "Expected four supported directions");
       console.assert(DIFFICULTY.foundation.hidden === 0, "Foundation difficulty should show all letters");
-      console.assert(DIFFICULTY.normal.clues === 12, "Normal difficulty should start with 12 clues");
+      console.assert(DIFFICULTY.normal.hidden <= 0.05, "Normal difficulty should hide a comfortable number of letters");
       console.assert(isModeUnlocked("kids") === true, "Kids mode should always be unlocked");
       console.assert(typeof doMenaceShuffle === "function", "Menace shuffle should be available");
       console.assert("menaceInProgress" in state, "Menace mode should expose an in-progress lock");
