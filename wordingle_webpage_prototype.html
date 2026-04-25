@@ -233,6 +233,8 @@
     .tile.found { background: var(--tile-success-bg); color: var(--tile-success-text); transform: scale(0.96); }
     .tile.preview { outline: 4px solid var(--warn); outline-offset: 1px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--warn) 18%, transparent); }
     .tile.swipe-start { outline: 4px solid var(--primary-2); outline-offset: 1px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary-2) 18%, transparent); }
+    .tile.swipe-path { outline: 4px solid var(--warn); outline-offset: 1px; background: color-mix(in srgb, var(--warn) 24%, var(--tile)); box-shadow: 0 0 0 6px color-mix(in srgb, var(--warn) 16%, transparent); }
+    .tile.swipe-path .tile-face { transform: scale(1.08); }
     .tile.solution { animation: letterEmphasis 840ms cubic-bezier(.18,.9,.18,1) both; background: var(--tile-success-bg); color: var(--tile-success-text); z-index: 3; }
     .tile.burst { animation: successPulse 600ms ease both; z-index: 3; }
     .tile.burst::before, .tile.burst::after, .tile.solution::before, .tile.solution::after {
@@ -455,7 +457,7 @@
     .bank-bar { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--muted) 18%, transparent); overflow:hidden; }
     .bank-fill { height:100%; width:var(--progress); border-radius:999px; background:linear-gradient(90deg, var(--primary), var(--primary-2)); }
 
-    .celebration { position: fixed; inset: 0; pointer-events: none; display: grid; place-items: center; z-index: 100; opacity: 0; transition: opacity 220ms ease; }
+    .celebration { position: fixed; inset: 0; pointer-events: none; display: grid; place-items: center; z-index: 625; opacity: 0; transition: opacity 220ms ease; }
     .celebration.show { opacity: 1; }
     .celebration-card {
       padding: 36px 42px;
@@ -815,7 +817,7 @@
         words: "Words", highScores: "High scores", setupTitle: "Set up Wordingle", setupIntro: "Choose the puzzle style. This locks in when the game starts.", close: "Close",
         mode: "Mode", difficulty: "Difficulty", gridSize: "Grid size", wordCount: "Words to hide", startGame: "Start game",
         soundOn: "Sound: on", soundOff: "Sound: off", notStarted: "Not started", chooseMode: "Choose a mode to begin.", ready: "Ready", locked: "Playing",
-        messageStart: "Pick your setup and start when ready.", messagePlaying: "Game started. Drag a word onto its starting tile, or tap a word then swipe from the first tile on mobile.", messageClue: "Tap any hidden tile to reveal it.", noClues: "No clues left. Brave mode activated.", visible: "That tile is already visible. Choose a hidden one.", clueSpent: "Clue spent. A letter has surfaced.", foundWord: "Nice! {word} found. Ripple-tastic.", wrong: "Not there. Try another start tile or change direction.", drop: "Drop the word onto the first tile of its hidden path.", solved: "Solved!", solvedSub: "Every word found. Deliciously clever.", reveal: "Revealing!", revealSub: "No shame. The grid was being cheeky.", revealWatch: "Watch the correct answers reveal.", noScores: "No scores yet. Go make history.", wordPlaceholder: "Words will appear here after you start.", points: "pts base", hint: "Open setup, start a game, then drag a word onto the grid.", direction: "Direction set to {dir}. Drag a word onto the grid."
+        messageStart: "Pick your setup and start when ready.", messagePlaying: "Game started. Drag a word onto its starting tile, or tap a word then swipe from the first tile on mobile.", swipeHint: "Swipe direction: {dir}" , messageClue: "Tap any hidden tile to reveal it.", noClues: "No clues left. Brave mode activated.", visible: "That tile is already visible. Choose a hidden one.", clueSpent: "Clue spent. A letter has surfaced.", foundWord: "Nice! {word} found. Ripple-tastic.", wrong: "Not there. Try another start tile or change direction.", drop: "Drop the word onto the first tile of its hidden path.", solved: "Solved!", solvedSub: "Every word found. Deliciously clever.", reveal: "Revealing!", revealSub: "No shame. The grid was being cheeky.", revealWatch: "Watch the correct answers reveal.", noScores: "No scores yet. Go make history.", wordPlaceholder: "Words will appear here after you start.", points: "pts base", hint: "Open setup, start a game, then drag a word onto the grid.", direction: "Direction set to {dir}. Drag a word onto the grid."
       },
       ga: {
         language: "Teanga", english: "English", irish: "Gaeilge", play: "Imir", playTitle: "Imir Wordingle", playIntro: "Lean do chosán dúshláin, nó díghlasáil saor-imirt níos déanaí.", settings: "Socruithe", settingsIntro: "Socraigh fuaim, atmaisféar agus éifeachtaí.", soundToggle: "Fuaim", continueChallenge: "Lean den dúshlán", freePlayLocked: "Díghlasáiltear saor-imirt tar éis cosán dúshláin a chríochnú.", playerName: "Ainm imreora", music: "Atmaisféar", musicOff: "As", musicKids: "Crónán te", musicSpace: "Spás domhain", musicTechno: "Buille íseal", musicFocus: "Fócas ciúin", musicClassical: "Athshondas bog", musicFestive: "Lonrú geimhridh", musicVolume: "Airde atmaisféir", sfxVolume: "Airde éifeachtaí", level: "Leibhéal", xp: "XP", runs: "Babhtaí", profileTitle: "Próifíl imreora", profileIntro: "Do dhul chun cinn áitiúil.", totalTime: "Am iomlán", wordsSolved: "Focail réitithe", wins: "Buanna", bankProgress: "Dul chun cinn banc focal", resetConfirmOne: "Athshocraigh an phróifíl? Bainfear XP, leibhéil, staitisticí agus díghlasálacha.", resetConfirmTwo: "Deimhniú deireanach: scrios an phróifíl seo go buan?", resetProfile: "Athshocraigh", unlocked: "Díghlasáilte", lightMode: "Mód geal", best: "Is fearr", leaderboardHint: "Barr 10", leaderboardTitle: "Clár ceannais", topScoresFor: "Na scóir is fearr don socrú seo", noConfigScore: "Gan scór fós",
@@ -824,7 +826,7 @@
         words: "Focail", highScores: "Scóir arda", setupTitle: "Socraigh Wordingle", setupIntro: "Roghnaigh stíl an phuzail. Glasálfar í nuair a thosaíonn an cluiche.", close: "Dún",
         mode: "Modh", difficulty: "Deacracht", gridSize: "Méid greille", wordCount: "Focail le cur i bhfolach", startGame: "Tosaigh",
         soundOn: "Fuaim: ann", soundOff: "Fuaim: as", notStarted: "Gan tosú", chooseMode: "Roghnaigh modh le tosú.", ready: "Réidh", locked: "Á imirt",
-        messageStart: "Roghnaigh an socrú agus tosaigh nuair atá tú réidh.", messagePlaying: "Tá an cluiche tosaithe. Tarraing focal chuig an gcéad tíl, nó tapáil focal agus svaidhpeáil ón gcéad tíl ar fhón.", messageClue: "Tapáil tíl fholaithe chun í a nochtadh.", noClues: "Níl aon leid fágtha. Bí cróga anois.", visible: "Tá an tíl sin le feiceáil cheana.", clueSpent: "Úsáideadh leid. Tá litir tagtha chun solais.", foundWord: "Go hiontach! Fuarthas {word}.", wrong: "Ní ansin atá sé. Bain triail eile as.", drop: "Scaoil an focal ar chéad tíl a chosáin.", solved: "Réitithe!", solvedSub: "Fuarthas gach focal. Go gleoite.", reveal: "Á nochtadh!", revealSub: "Ná bí buartha. Bhí an ghreille dána.", revealWatch: "Féach ar na freagraí cearta á nochtadh.", noScores: "Níl aon scór fós. Déan stair.", wordPlaceholder: "Beidh na focail anseo tar éis duit tosú.", points: "pointe bonn", hint: "Oscail an socrú, tosaigh cluiche, ansin tarraing focal chuig an ngreille.", direction: "Treo socraithe go {dir}. Tarraing focal chuig an ngreille."
+        messageStart: "Roghnaigh an socrú agus tosaigh nuair atá tú réidh.", messagePlaying: "Tá an cluiche tosaithe. Tarraing focal chuig an gcéad tíl, nó tapáil focal agus svaidhpeáil ón gcéad tíl ar fhón.", swipeHint: "Treo svaidhpeála: {dir}" , messageClue: "Tapáil tíl fholaithe chun í a nochtadh.", noClues: "Níl aon leid fágtha. Bí cróga anois.", visible: "Tá an tíl sin le feiceáil cheana.", clueSpent: "Úsáideadh leid. Tá litir tagtha chun solais.", foundWord: "Go hiontach! Fuarthas {word}.", wrong: "Ní ansin atá sé. Bain triail eile as.", drop: "Scaoil an focal ar chéad tíl a chosáin.", solved: "Réitithe!", solvedSub: "Fuarthas gach focal. Go gleoite.", reveal: "Á nochtadh!", revealSub: "Ná bí buartha. Bhí an ghreille dána.", revealWatch: "Féach ar na freagraí cearta á nochtadh.", noScores: "Níl aon scór fós. Déan stair.", wordPlaceholder: "Beidh na focail anseo tar éis duit tosú.", points: "pointe bonn", hint: "Oscail an socrú, tosaigh cluiche, ansin tarraing focal chuig an ngreille.", direction: "Treo socraithe go {dir}. Tarraing focal chuig an ngreille."
       }
     };
 
@@ -1629,6 +1631,7 @@
         tile.appendChild(face);
         tile.addEventListener("click", () => handleTileClick(i));
         tile.addEventListener("pointerdown", e => startGridSwipe(e, i));
+        tile.addEventListener("pointermove", e => updateGridSwipe(e));
         tile.addEventListener("pointerup", e => endGridSwipe(e, i));
         tile.addEventListener("pointercancel", cancelGridSwipe);
         tile.addEventListener("pointerenter", () => previewDrop(i));
@@ -1811,15 +1814,43 @@
         gridEl.children[index(r, c)]?.classList.add("preview");
       }
     }
-    function clearPreview() { [...gridEl.children].forEach(t => t.classList.remove("preview", "swipe-start")); }
+    function clearPreview() { [...gridEl.children].forEach(t => t.classList.remove("preview", "swipe-start", "swipe-path")); }
+
+    function previewSwipePath(startIndex, dirKey) {
+      clearPreview();
+      const word = state.selectedWord !== null ? state.words[state.selectedWord]?.word : "";
+      const dir = DIRECTIONS.find(d => d.key === dirKey) || DIRECTIONS[0];
+      const row = Math.floor(startIndex / state.gridSize);
+      const col = startIndex % state.gridSize;
+      gridEl.children[startIndex]?.classList.add("swipe-start");
+      for (let i = 0; i < word.length; i++) {
+        const r = row + dir.dr * i;
+        const c = col + dir.dc * i;
+        if (!inBounds(r, c)) break;
+        gridEl.children[index(r, c)]?.classList.add("swipe-path");
+      }
+    }
 
     function startGridSwipe(e, startIndex) {
       if (!isCoarsePointer() || state.selectedWord === null || state.selectedTool || !state.gameActive || state.gameOver || state.menaceInProgress) return;
       e.preventDefault();
-      state.swipeStart = { index: startIndex, x: e.clientX, y: e.clientY };
-      clearPreview();
-      gridEl.children[startIndex]?.classList.add("swipe-start");
+      state.swipeStart = { index: startIndex, x: e.clientX, y: e.clientY, pointerId: e.pointerId };
+      e.currentTarget?.setPointerCapture?.(e.pointerId);
+      previewSwipePath(startIndex, state.selectedDir || "right");
       haptic(8);
+    }
+
+    function updateGridSwipe(e) {
+      if (!state.swipeStart || state.selectedWord === null) return;
+      e.preventDefault();
+      const start = state.swipeStart;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      const dir = directionFromSwipe(dx, dy);
+      state.selectedDir = dir;
+      previewSwipePath(start.index, dir);
+      const label = DIRECTIONS.find(d => d.key === dir)?.label || "→";
+      setMessage(t("swipeHint", { dir: label }));
     }
 
     function endGridSwipe(e, endIndex) {
@@ -1829,7 +1860,7 @@
       const dx = e.clientX - start.x;
       const dy = e.clientY - start.y;
       state.selectedDir = directionFromSwipe(dx, dy);
-      previewDrop(start.index, { clientX: e.clientX, clientY: e.clientY });
+      previewSwipePath(start.index, state.selectedDir);
       attemptWord(start.index);
       state.swipeStart = null;
       clearPreview();
@@ -1839,6 +1870,7 @@
     function cancelGridSwipe() {
       state.swipeStart = null;
       clearPreview();
+      renderWords();
     }
 
     function directionFromSwipe(dx, dy) {
@@ -2541,6 +2573,7 @@
       console.assert(typeof chunkyLockSound === "function", "Chunky lock sound should exist");
       console.assert(typeof haptic === "function", "Haptic helper should exist");
       console.assert(typeof directionFromSwipe === "function", "Swipe direction helper should exist");
+      console.assert(typeof previewSwipePath === "function", "Swipe preview helper should exist");
       const originalGrid = gridSizeSelect.value;
       const originalCount = wordCountSelect.value;
       gridSizeSelect.value = "20";
