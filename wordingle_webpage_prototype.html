@@ -343,7 +343,7 @@
       user-select: none;
       transition: transform 180ms ease, opacity 180ms ease, filter 180ms ease;
       max-width: 100%;
-      flex: 0 1 var(--word-basis, auto);
+      flex: 0 0 auto;
       min-width: 0;
       height: var(--word-height, 38px);
       overflow: visible;
@@ -359,21 +359,23 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      max-width: 100%;
-      width: auto;
-      min-height: 2.4em;
-      padding: 0.6em 1.8em;
+      box-sizing: border-box;
+      width: max-content;
+      max-width: min(100%, calc(100vw - 18px));
+      min-width: calc((var(--word-chars, 5) * 0.74em) + 4.2em);
+      min-height: 2.45em;
+      padding: 0.62em 2.1em;
       border-radius: 999px;
       border: 1px solid var(--tile-border);
       background: var(--panel-solid);
       color: var(--text);
       letter-spacing: 0.05em;
-      font-size: var(--word-font, clamp(0.9rem, 2.6vw, 1.3rem));
+      font-size: var(--word-font, clamp(0.82rem, 2.3vw, 1.25rem));
       white-space: nowrap;
       overflow: visible;
       text-overflow: clip;
       box-shadow: 0 10px 22px rgba(0,0,0,0.05);
-      line-height: 1.2;
+      line-height: 1.18;
     }
     .word-card small { display: none; }
     @keyframes wordFound { 0% { transform: scale(1); } 45% { transform: scale(1.08); } 100% { transform: scale(.96); } }
@@ -511,10 +513,10 @@
       .app {
         height: 100dvh;
         max-height: 100dvh;
-        padding: 6px;
-        gap: 6px;
+        padding: 5px;
+        gap: 5px;
         grid-template-columns: 1fr;
-        grid-template-rows: auto auto minmax(0, 1fr) clamp(92px, 22dvh, 132px);
+        grid-template-rows: auto auto minmax(0, 1fr) minmax(130px, 30dvh);
       }
       header, .panel { border-radius: 14px; padding: 7px; }
       header {
@@ -552,8 +554,8 @@
       #giveUpBtn::before { content: "✕"; font-size: .85rem; }
       #setupBtn { font-size: 0; width: 34px; height: 30px; padding: 0; }
       #setupBtn::before { content: "▶"; font-size: .85rem; }
-      .stats-top { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
-      .stat { padding: 5px 6px; border-radius: 12px; }
+      .stats-top { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+      .stat { padding: 4px 6px; border-radius: 12px; }
       .stat span { font-size: 0.56rem; }
       .stat strong { font-size: 0.86rem; margin-top: 1px; }
       .stat small { display: none; }
@@ -563,11 +565,12 @@
         min-height: 0;
         display: grid;
         grid-template-rows: auto minmax(0, 1fr);
-        padding: 7px;
+        padding: 7px 8px 8px;
       }
       .side-right h2 { font-size: .78rem; margin-bottom: 4px; }
-      .word-list { padding: 4px; gap: var(--word-gap, 4px); align-content: center; }
-      .word-card strong { padding: .48em 1.12em; min-height: 2.1em; line-height: 1.12; }
+      .word-list { padding: 8px 6px 10px; gap: var(--word-gap, 5px); align-content: center; }
+      .word-card { padding: 3px 5px; height: var(--word-height, 34px); }
+      .word-card strong { padding: .58em 1.75em; min-height: 2.35em; line-height: 1.16; max-width: calc(100vw - 28px); }
       .side-right h2:nth-of-type(2), .highscores { display: none; }
       .modal-backdrop { padding: 8px; place-items: center; }
       .modal {
@@ -1617,7 +1620,7 @@
       const wordCells = new Set(state.placements.flatMap(p => p?.positions || []));
       const wordCellCount = wordCells.size;
       const nonWordCount = Math.max(0, state.cells.length - wordCellCount);
-      const target = Math.max(1, Math.floor(nonWordCount * hiddenRatio));
+      const target = Math.max(1, Math.floor(wordCellCount * hiddenRatio));
       const candidates = shuffle([...wordCells]);
       let hiddenCount = 0;
       for (const pos of candidates) {
@@ -1688,6 +1691,7 @@
         const card = document.createElement("div");
         card.className = "word-card" + (w.found ? " found" : "") + (state.selectedWord === i ? " selected" : "");
         card.dataset.wordId = i;
+        card.style.setProperty("--word-chars", String(w.word.length));
         card.innerHTML = `<strong>${w.word}</strong>`;
         if (!w.found) {
           card.addEventListener("pointerdown", e => {
@@ -1737,10 +1741,10 @@
       const columns = isDesktopSidePanel ? 1 : Math.max(1, Math.ceil(Math.sqrt(count * Math.max(0.8, box.width / Math.max(1, box.height)))));
       const rows = Math.ceil(count / columns);
       const cardHeight = Math.max(24, Math.floor((Math.max(60, box.height - 16) - gap * Math.max(0, rows - 1)) / rows));
-      const basis = isDesktopSidePanel ? "min(100%, 15rem)" : `calc((100% - ${gap * (columns - 1)}px) / ${columns})`;
-      const fontByHeight = cardHeight * 0.42;
-      const fontByWidth = (box.width / columns) / Math.max(5.2, longest * 0.72);
-      const fontSize = Math.max(10, Math.min(28, Math.floor(Math.min(fontByHeight, fontByWidth))));
+      const basis = "auto";
+      const fontByHeight = cardHeight * 0.38;
+      const fontByWidth = (box.width / Math.max(1, columns)) / Math.max(7.2, longest * 1.08 + 4.4);
+      const fontSize = Math.max(9, Math.min(24, Math.floor(Math.min(fontByHeight, fontByWidth))));
       wordListEl.style.setProperty("--word-gap", gap + "px");
       wordListEl.style.setProperty("--word-basis", basis);
       wordListEl.style.setProperty("--word-height", cardHeight + "px");
