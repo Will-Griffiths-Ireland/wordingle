@@ -161,7 +161,7 @@
     .stats-top {
       grid-column: 1 / -1;
       display: grid;
-      grid-template-columns: repeat(4, minmax(90px, 1fr));
+      grid-template-columns: repeat(3, minmax(90px, 1fr));
       gap: 8px;
       min-height: 0;
     }
@@ -219,9 +219,11 @@
       transform-style: preserve-3d;
       perspective: 800px;
       position: relative;
-      overflow: visible;
+      overflow: hidden;
+      isolation: isolate;
+      background-clip: padding-box;
     }
-    .tile-face { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; backface-visibility: hidden; transform-style: preserve-3d; }
+    .tile-face { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; backface-visibility: hidden; transform-style: preserve-3d; background: transparent; line-height: 1; }
 
     .tile.hidden {
       color: transparent;
@@ -333,7 +335,7 @@
       display: inline-flex;
       justify-content: center;
       align-items: center;
-      padding: 2px 1px;
+      padding: 3px 4px;
       background: transparent;
       border: 0;
       border-radius: 999px;
@@ -344,7 +346,7 @@
       flex: 0 1 var(--word-basis, auto);
       min-width: 0;
       height: var(--word-height, 38px);
-      overflow: hidden;
+      overflow: visible;
     }
     .word-card:hover { transform: translateY(-1px); }
     .word-card:active { cursor: grabbing; }
@@ -359,8 +361,8 @@
       justify-content: center;
       max-width: 100%;
       width: 100%;
-      min-height: 1.9em;
-      padding: 0.48em 0.95em;
+      min-height: 2.15em;
+      padding: 0.5em 1.35em;
       border-radius: 999px;
       border: 1px solid var(--tile-border);
       background: var(--panel-solid);
@@ -368,9 +370,10 @@
       letter-spacing: 0.05em;
       font-size: var(--word-font, clamp(0.85rem, 2.4vw, 1.25rem));
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      overflow: visible;
+      text-overflow: clip;
       box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+      line-height: 1.12;
     }
     .word-card small { display: none; }
     @keyframes wordFound { 0% { transform: scale(1); } 45% { transform: scale(1.08); } 100% { transform: scale(.96); } }
@@ -564,7 +567,7 @@
       }
       .side-right h2 { font-size: .78rem; margin-bottom: 4px; }
       .word-list { padding: 4px; gap: var(--word-gap, 4px); align-content: center; }
-      .word-card strong { padding: .44em .82em; min-height: 2em; line-height: 1.12; }
+      .word-card strong { padding: .48em 1.12em; min-height: 2.1em; line-height: 1.12; }
       .side-right h2:nth-of-type(2), .highscores { display: none; }
       .modal-backdrop { padding: 8px; place-items: center; }
       .modal {
@@ -614,7 +617,6 @@
     <section class="stats-top">
       <div class="stat"><span data-i18n="time">Time</span><strong id="timeStat">0:00</strong><small id="setupMeta">Not started</small></div>
       <div class="stat"><span data-i18n="score">Score</span><strong id="scoreStat">0</strong><small data-i18n="scoreHint">Higher is better</small></div>
-      <div class="stat"><span data-i18n="found">Found</span><strong id="foundStat">0/0</strong><small data-i18n="foundHint">Words solved</small></div>
       <button class="stat stat-button" id="leaderboardBtn" type="button"><span data-i18n="best">Best</span><strong id="bestStat">—</strong><small data-i18n="leaderboardHint">View top 10</small></button>
     </section>
     <div class="setup-chip" id="setupChip"></div>
@@ -630,7 +632,7 @@
         <h2 data-i18n="tools">Tools</h2>
         <div id="toolList" class="tool-list"></div>
       </div>
-      <h2 data-i18n="words">Words</h2>
+      <h2 id="wordsTitle" data-i18n="words">Words</h2>
       <div id="wordList" class="word-list"></div>
       <div class="message" id="message">Pick your setup and start when ready.</div>
       <h2 style="margin-top:18px; display:none" data-i18n="highScores">High scores</h2>
@@ -686,8 +688,6 @@
       <div class="unlock-note" id="unlockNote"></div>
       <div class="perk-list" id="perkList"></div>
       <div class="modal-actions">
-        <button class="btn secondary" id="resetProfileBtn" data-i18n="resetProfile">Reset profile</button>
-        <button class="btn secondary" id="modalRandomThemeBtn" data-i18n="randomTheme">Random theme</button>
         <button class="btn secondary existing-profile-only" id="freePlayBtn" data-i18n="freePlay">Free play</button>
         <button class="btn secondary" id="challengeModeBtn" data-i18n="challengePlay">Challenge mode</button>
         <button class="btn success" id="continueChallengeBtn" data-i18n="continueChallenge">Continue challenge</button>
@@ -715,8 +715,7 @@
       <div class="bank-progress" id="bankProgress"></div>
       <div class="modal-actions">
         <button class="btn danger" id="profileResetBtn" data-i18n="resetProfile">Reset profile</button>
-        <button class="btn success" id="profileNextBtn" data-i18n="continueChallenge">Continue challenge</button>
-        <button class="btn success" id="profilePlayBtn" data-i18n="setup">Setup game</button>
+        <button class="btn secondary" id="profileCloseBottomBtn" data-i18n="close">Close</button>
       </div>
     </div>
   </div>
@@ -853,10 +852,10 @@
 
     const DIFFICULTY = {
       foundation: { hidden: 0, clues: 0, multiplier: 0.75, noClues: true },
-      easy: { hidden: 0.03, clues: 0, multiplier: 1 },
-      normal: { hidden: 0.05, clues: 0, multiplier: 1.25 },
-      hard: { hidden: 0.07, clues: 0, multiplier: 1.6 },
-      expert: { hidden: 0.09, clues: 0, multiplier: 2.1 }
+      easy: { hidden: 0.12, clues: 0, multiplier: 1 },
+      normal: { hidden: 0.18, clues: 0, multiplier: 1.25 },
+      hard: { hidden: 0.24, clues: 0, multiplier: 1.6 },
+      expert: { hidden: 0.3, clues: 0, multiplier: 2.1 }
     };
 
     const THEMES = [
@@ -974,6 +973,7 @@
     const timeStat = document.getElementById("timeStat");
     const scoreStat = document.getElementById("scoreStat");
     const foundStat = document.getElementById("foundStat");
+    const wordsTitle = document.getElementById("wordsTitle");
     const setupMeta = document.getElementById("setupMeta");
     const setupChip = document.getElementById("setupChip");
     const playStyleSelect = document.getElementById("playStyleSelect");
@@ -1015,8 +1015,7 @@
     const setupChallengePathEl = document.getElementById("setupChallengePath");
     const closeProfileBtn = document.getElementById("closeProfileBtn");
     const profileResetBtn = document.getElementById("profileResetBtn");
-    const profilePlayBtn = document.getElementById("profilePlayBtn");
-    const profileNextBtn = document.getElementById("profileNextBtn");
+    const profileCloseBottomBtn = document.getElementById("profileCloseBottomBtn");
     const languageSelect = document.getElementById("languageSelect");
     const musicSelect = document.getElementById("musicSelect");
     const playerNameInput = document.getElementById("playerNameInput");
@@ -1615,8 +1614,11 @@
     function hideCells(hiddenRatio) {
       for (const cell of state.cells) cell.hidden = false;
       if (!hiddenRatio) return;
-      const target = Math.floor(state.cells.length * hiddenRatio);
-      const candidates = shuffle(state.cells.map((_, i) => i));
+      const wordCells = new Set(state.placements.flatMap(p => p?.positions || []));
+      const wordCellCount = wordCells.size;
+      const nonWordCount = Math.max(0, state.cells.length - wordCellCount);
+      const target = Math.max(1, Math.floor(nonWordCount * hiddenRatio));
+      const candidates = shuffle([...wordCells]);
       let hiddenCount = 0;
       for (const pos of candidates) {
         if (hiddenCount >= target) break;
@@ -1631,7 +1633,7 @@
             if (inBounds(r, c) && state.cells[index(r, c)].hidden) hiddenNeighbours++;
           }
         }
-        if (hiddenNeighbours >= 2) continue;
+        if (hiddenNeighbours >= 3) continue;
         state.cells[pos].hidden = true;
         hiddenCount++;
       }
@@ -1751,7 +1753,11 @@
       const countdown = state.lockedSetup?.menace && state.nextReshuffleAt ? Math.max(0, Math.ceil((state.nextReshuffleAt - Date.now()) / 1000)) : null;
       timeStat.textContent = countdown !== null ? `${min}:${sec} · ↻ ${countdown}s` : `${min}:${sec}`;
       scoreStat.textContent = state.score;
-      foundStat.textContent = `${state.words.filter(w => w.found).length}/${state.words.length}`;
+      if (foundStat) foundStat.textContent = `${state.words.filter(w => w.found).length}/${state.words.length}`;
+      if (wordsTitle) {
+        const total = state.words.length || 0;
+        wordsTitle.textContent = total ? `${t("words")} · ${total}` : t("words");
+      }
     }
 
     function handleTileClick(i) {
@@ -2417,13 +2423,7 @@
     setupBtn.addEventListener("click", openSetup);
     currentUserChip.addEventListener("click", () => openProfile(false));
     closeProfileBtn.addEventListener("click", () => profileModal.classList.remove("show"));
-    profilePlayBtn.addEventListener("click", () => { profileModal.classList.remove("show"); openSetup(); });
-    profileNextBtn.addEventListener("click", () => {
-      profileModal.classList.remove("show");
-      playStyleSelect.value = "challenge";
-      applyPlayStyleVisibility();
-      newGame();
-    });
+    profileCloseBottomBtn.addEventListener("click", () => profileModal.classList.remove("show"));
     profileResetBtn.addEventListener("click", () => {
       if (!confirm(t("resetConfirmOne"))) return;
       if (!confirm(t("resetConfirmTwo"))) return;
@@ -2455,24 +2455,17 @@
     settingsBtn.addEventListener("click", () => settingsModal.classList.add("show"));
     document.getElementById("closeSettingsBtn").addEventListener("click", () => settingsModal.classList.remove("show"));
     settingsSoundBtn.addEventListener("click", () => soundBtn.click());
-    giveUpBtn.addEventListener("click", () => endGame(t("reveal"), t("revealSub"), false));
+    giveUpBtn.addEventListener("click", () => {
+      if (!confirm(state.lang === "ga" ? "An bhfuil tú cinnte gur mhaith leat éirí as agus na freagraí a nochtadh?" : "Give up and reveal the answers?")) return;
+      endGame(t("reveal"), t("revealSub"), false);
+    });
     document.getElementById("themeBtn").addEventListener("click", () => {
       document.body.classList.toggle("dark");
       localStorage.setItem("wordingleTheme", document.body.classList.contains("dark") ? "dark" : "light");
       updateIconButtons();
     });
     document.getElementById("randomThemeBtn").addEventListener("click", randomTheme);
-    document.getElementById("modalRandomThemeBtn").addEventListener("click", randomTheme);
-    resetProfileBtn.addEventListener("click", () => {
-      if (!confirm(t("resetConfirmOne"))) return;
-      if (!confirm(t("resetConfirmTwo"))) return;
-      state.profile = { ...DEFAULT_PROFILE, logo: generateLogo("Player") };
-      playerNameInput.value = state.profile.name;
-      localStorage.setItem("wordingleProfile", JSON.stringify(state.profile));
-      populateSelects();
-      renderProfile();
-      renderTopHighScore();
-    });
+    
     musicSelect.addEventListener("change", () => {
       state.music = musicSelect.value;
       localStorage.setItem("wordingleMusic", state.music);
@@ -2593,7 +2586,7 @@
       console.assert(typeof burstConfettiFromTile === "function", "Confetti function should be defined");
       console.assert(DIRECTIONS.length === 4, "Expected four supported directions");
       console.assert(DIFFICULTY.foundation.hidden === 0, "Foundation difficulty should show all letters");
-      console.assert(DIFFICULTY.normal.hidden <= 0.05, "Normal difficulty should hide a comfortable number of letters");
+      console.assert(DIFFICULTY.normal.hidden <= 0.2, "Normal difficulty should hide a comfortable number of word letters");
       console.assert(isModeUnlocked("kids") === true, "Kids mode should always be unlocked");
       console.assert(typeof doMenaceShuffle === "function", "Menace shuffle should be available");
       console.assert("menaceInProgress" in state, "Menace mode should expose an in-progress lock");
