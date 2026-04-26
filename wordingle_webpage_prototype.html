@@ -222,12 +222,26 @@
       transition: border-color 180ms ease, color 180ms ease, transform 180ms ease, background 180ms ease;
       text-align: center;
       display: grid;
-      place-items: center;
-      align-content: center;
+      grid-template-rows: auto 1fr auto;
+      justify-items: center;
+      align-items: start;
+      align-content: start;
+      gap: 3px;
     }
-    .stat span { display: block; color: var(--muted); font-size: 0.66rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.07em; text-align: center; }
+    .stat span {
+      display: block;
+      width: 100%;
+      color: var(--muted);
+      font-size: 0.66rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      text-align: center;
+      line-height: 1.05;
+    }
     .stat strong {
       display: block;
+      width: 100%;
       margin-top: 1px;
       font-size: clamp(1.75rem, 4.4vw, 3.4rem);
       line-height: .92;
@@ -238,7 +252,19 @@
       text-shadow: 0 5px 0 color-mix(in srgb, var(--primary) 12%, transparent), 0 12px 22px rgba(0,0,0,0.1);
       text-align: center;
     }
-    .stat small { display: block; margin-top: 5px; color: color-mix(in srgb, var(--primary-2) 62%, var(--muted)); font-weight: 850; font-size: 0.68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+    .stat small {
+      display: block;
+      width: 100%;
+      margin-top: 4px;
+      color: color-mix(in srgb, var(--primary-2) 62%, var(--muted));
+      font-weight: 850;
+      font-size: 0.68rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      line-height: 1.1;
+    }
     .stat.score-pop, .stat.timer-pulse { animation: statJuice 420ms cubic-bezier(.18,.9,.18,1) both; }
     @keyframes statJuice { 0% { transform: scale(1); } 45% { transform: scale(1.045); } 100% { transform: scale(1); } }
     .timer-stat {
@@ -408,8 +434,7 @@
       0% { opacity: 0; transform: translateY(-14px) scale(2); filter: blur(2px); }
       100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
     }
-    .word-card.decoy strong { border-style: dashed; }
-    .word-card.wrong-decoy { animation: wrongDecoy 420ms ease both; }
+        .word-card.wrong-decoy { animation: wrongDecoy 420ms ease both; }
     @keyframes wrongDecoy { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 55% { transform: translateX(5px); } 80% { transform: translateX(-2px); } }
     .word-list {
       display: flex;
@@ -525,14 +550,17 @@
     .free-locked-note { display: none; margin-top: 12px; }
     .audio-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tile-border); }
     input[type="range"] { accent-color: var(--primary); width: 100%; }
-    .profile-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+    .profile-strip { display: none; }
     .profile-tile { background: var(--panel-solid); border: 1px solid var(--tile-border); border-radius: 14px; padding: 7px 8px; min-width: 0; }
     .profile-tile span { display:block; color: var(--muted); font-size: .58rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .profile-tile strong { display:block; margin-top: 1px; font-size: .94rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .unlock-note { color: var(--muted); font-size: .78rem; line-height: 1.35; margin-top: 10px; }
-    .perk-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-    .perk-pill { border-radius:999px; padding:6px 9px; background: color-mix(in srgb, var(--primary) 12%, var(--panel-solid)); border:1px solid var(--tile-border); font-size:.72rem; font-weight:800; }
+    .unlock-note { display: none; }
+    .perk-list { display: none; }
+    .perk-pill { display: none; }
     .modal-actions { display: flex; justify-content: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    .setup-primary-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 0 0 16px; }
+    .setup-primary-actions .btn { width: 100%; justify-content: center; }
+    @media (max-width: 620px) { .setup-primary-actions { grid-template-columns: 1fr; } }
     .leaderboard-list { display: grid; gap: 8px; max-height: min(52vh, 430px); overflow: hidden; }
     .help-copy { display: grid; gap: 12px; color: var(--text); }
     .help-copy h3 { margin: 8px 0 0; font-size: 1rem; }
@@ -653,10 +681,10 @@
       #setupBtn { font-size: 0; width: 34px; height: 30px; padding: 0; }
       #setupBtn::before { content: "▶"; font-size: .85rem; }
       .stats-top { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
-      .stat { padding: 6px 7px; border-radius: 12px; }
-      .stat span { font-size: 0.52rem; }
-      .stat strong { font-size: clamp(1.15rem, 7vw, 1.85rem); margin-top: 1px; }
-      .stat small { font-size: .54rem; margin-top: 2px; }
+      .stat { padding: 7px 7px 5px; border-radius: 12px; gap: 2px; min-height: 64px; }
+      .stat span { font-size: 0.52rem; line-height: 1; }
+      .stat strong { font-size: clamp(1.15rem, 7vw, 1.85rem); margin-top: 1px; line-height: .95; }
+      .stat small { font-size: .54rem; margin-top: 1px; line-height: 1; }
       .timer-stat { background: color-mix(in srgb, var(--panel) 84%, var(--primary) 6%); }
       .game-shell { min-height: 0; overflow: hidden; }
       .grid-wrap { padding: 5px; border-radius: 16px; }
@@ -749,6 +777,11 @@
         </div>
         <button class="btn secondary" id="closeSetupBtn" data-i18n="close">Close</button>
       </div>
+      <div class="setup-primary-actions">
+        <button class="btn success" id="continueChallengeBtn" data-i18n="continueChallenge">Continue challenge</button>
+        <button class="btn secondary existing-profile-only" id="freePlayBtn" data-i18n="freePlay">Free play</button>
+        <button class="btn secondary existing-profile-only" id="resetChallengeBtn" data-i18n="resetChallenge">Reset challenge</button>
+      </div>
       <div class="modal-grid">
         <label class="new-profile-only"><span data-i18n="playerName">Player name</span>
           <input id="playerNameInput" maxlength="18" placeholder="Player" />
@@ -791,9 +824,7 @@
       <div class="unlock-note" id="unlockNote"></div>
       <div class="perk-list" id="perkList"></div>
       <div class="modal-actions">
-        <button class="btn secondary existing-profile-only" id="freePlayBtn" data-i18n="freePlay">Free play</button>
         <button class="btn secondary" id="challengeModeBtn" data-i18n="challengePlay">Challenge mode</button>
-        <button class="btn success" id="continueChallengeBtn" data-i18n="continueChallenge">Continue challenge</button>
         <button class="btn success" id="startGameBtn" data-i18n="startGame">Start game</button>
       </div>
     </div>
@@ -966,7 +997,7 @@
   <script>
     const I18N = {
       en: {
-        language: "Language", english: "English", irish: "Gaeilge", play: "Play", timeLimit: "Time limit", noLimit: "No limit", timeUp: "Time up!", timeUpSub: "The round is over. Here are the answers.", playTitle: "Play Wordingle", playIntro: "Continue your challenge path, or unlock free play later.", settings: "Settings", settingsIntro: "Tune sound, ambience and effects.", soundToggle: "Sound", continueChallenge: "Continue challenge", nextChallenge: "Continue to next stage", freePlayLocked: "Free play unlocks after completing a challenge path.", playerName: "Player name", music: "Ambience", musicOff: "Off", musicKids: "Warm hum", musicSpace: "Deep space", musicTechno: "Low pulse", musicFocus: "Calm focus", musicClassical: "Soft resonance", musicFestive: "Winter glow", musicVolume: "Ambience volume", sfxVolume: "Effects volume", level: "Level", xp: "XP", runs: "Runs", profileTitle: "Player profile", profileIntro: "Your local progress and unlocks.", totalTime: "Total time", wordsSolved: "Words solved", wins: "Wins", bankProgress: "Word bank progress", resetConfirmOne: "Reset profile? This will remove XP, levels, stats and unlocks.", resetConfirmTwo: "Final confirmation: permanently delete this profile?", resetProfile: "Reset profile", unlocked: "Unlocked", lightMode: "Light mode", best: "Best", topScore: "Top score", leaderboardHint: "View top 10", leaderboardTitle: "Leaderboard", topScoresFor: "Top scores for this setup", noConfigScore: "No score yet",
+        language: "Language", english: "English", irish: "Gaeilge", play: "Play", timeLimit: "Time limit", noLimit: "No limit", timeUp: "Time up!", timeUpSub: "The round is over. Here are the answers.", playTitle: "Play Wordingle", playIntro: "Continue your challenge path, or unlock free play later.", settings: "Settings", settingsIntro: "Tune sound, ambience and effects.", soundToggle: "Sound", continueChallenge: "Continue challenge", resetChallenge: "Reset challenge", resetChallengeConfirm: "Reset challenge progress? This keeps your profile, but returns both challenge paths to stage one.", resetChallengeDone: "Challenge progress reset.", nextChallenge: "Continue to next stage", freePlayLocked: "Free play unlocks after completing a challenge path.", playerName: "Player name", music: "Ambience", musicOff: "Off", musicKids: "Warm hum", musicSpace: "Deep space", musicTechno: "Low pulse", musicFocus: "Calm focus", musicClassical: "Soft resonance", musicFestive: "Winter glow", musicVolume: "Ambience volume", sfxVolume: "Effects volume", level: "Level", xp: "XP", runs: "Runs", profileTitle: "Player profile", profileIntro: "Your local progress and unlocks.", totalTime: "Total time", wordsSolved: "Words solved", wins: "Wins", bankProgress: "Word bank progress", resetConfirmOne: "Reset profile? This will remove XP, levels, stats and unlocks.", resetConfirmTwo: "Final confirmation: permanently delete this profile?", resetProfile: "Reset profile", unlocked: "Unlocked", lightMode: "Light mode", best: "Best", topScore: "Top score", leaderboardHint: "View top 10", leaderboardTitle: "Leaderboard", topScoresFor: "Top scores for this setup", noConfigScore: "No score yet",
         title: "Wordingle", tagline: "Find hidden words at your own pace.", playStyle: "Play style", freePlay: "Free play", challengePlay: "Challenge mode", audience: "Audience", child: "Child", adultAudience: "Adult", help: "Help", helpTitle: "How to play", helpText: "Drag a word onto the first tile where you think it starts. Direction is inferred from where you drag across the start tile. Reveal tools can uncover hidden letters. In challenge mode, Reshuffle rearranges unlocked tiles on a countdown. Found words are locked safely in place.", menace: "Reshuffle mode", menaceOff: "Off", menaceOn: "On", menaceEvent: "Reshuffle! The grid is changing.", reshuffleIn: "Reshuffle in", theme: "Dark mode", randomTheme: "Random theme", giveUp: "Give up", setup: "Setup", play: "Play",
         time: "Time", score: "Score", clues: "Clues", scoreHint: "Higher is better", foundHint: "Words solved",
         words: "Words", highScores: "High scores", setupTitle: "Set up Wordingle", setupIntro: "Choose the puzzle style. This locks in when the game starts.", close: "Close",
@@ -975,7 +1006,7 @@
         messageStart: "Pick your setup and start when ready.", messagePlaying: "Game started. Drag a word onto its starting tile, or tap a word then swipe from the first tile on mobile.", swipeHint: "Swipe direction: {dir}" , messageClue: "Tap any hidden tile to reveal it.", noClues: "No clues left. Brave mode activated.", visible: "That tile is already visible. Choose a hidden one.", clueSpent: "Clue spent. A letter has surfaced.", foundWord: "Nice! {word} found. Ripple-tastic.", wrong: "Not there. Try another start tile or change direction.", drop: "Drop the word onto the first tile of its hidden path.", solved: "Solved!", solvedSub: "Every word found. Deliciously clever.", reveal: "Revealing!", revealSub: "No shame. The grid was being cheeky.", revealWatch: "Watch the correct answers reveal.", noScores: "No scores yet. Go make history.", wordPlaceholder: "Words will appear here after you start.", points: "pts base", hint: "Open setup, start a game, then drag a word onto the grid.", direction: "Direction set to {dir}. Drag a word onto the grid."
       },
       ga: {
-        language: "Teanga", english: "English", irish: "Gaeilge", play: "Imir", timeLimit: "Teorainn ama", noLimit: "Gan teorainn", timeUp: "Tá an t-am istigh!", timeUpSub: "Tá an babhta thart. Seo na freagraí.", playTitle: "Imir Wordingle", playIntro: "Lean do chosán dúshláin, nó díghlasáil saor-imirt níos déanaí.", settings: "Socruithe", settingsIntro: "Socraigh fuaim, atmaisféar agus éifeachtaí.", soundToggle: "Fuaim", continueChallenge: "Lean den dúshlán", nextChallenge: "Lean go dtí an chéad chéim eile", freePlayLocked: "Díghlasáiltear saor-imirt tar éis cosán dúshláin a chríochnú.", playerName: "Ainm imreora", music: "Atmaisféar", musicOff: "As", musicKids: "Crónán te", musicSpace: "Spás domhain", musicTechno: "Buille íseal", musicFocus: "Fócas ciúin", musicClassical: "Athshondas bog", musicFestive: "Lonrú geimhridh", musicVolume: "Airde atmaisféir", sfxVolume: "Airde éifeachtaí", level: "Leibhéal", xp: "XP", runs: "Babhtaí", profileTitle: "Próifíl imreora", profileIntro: "Do dhul chun cinn áitiúil.", totalTime: "Am iomlán", wordsSolved: "Focail réitithe", wins: "Buanna", bankProgress: "Dul chun cinn banc focal", resetConfirmOne: "Athshocraigh an phróifíl? Bainfear XP, leibhéil, staitisticí agus díghlasálacha.", resetConfirmTwo: "Deimhniú deireanach: scrios an phróifíl seo go buan?", resetProfile: "Athshocraigh", unlocked: "Díghlasáilte", lightMode: "Mód geal", best: "Is fearr", topScore: "Scór is airde", leaderboardHint: "Barr 10", leaderboardTitle: "Clár ceannais", topScoresFor: "Na scóir is fearr don socrú seo", noConfigScore: "Gan scór fós",
+        language: "Teanga", english: "English", irish: "Gaeilge", play: "Imir", timeLimit: "Teorainn ama", noLimit: "Gan teorainn", timeUp: "Tá an t-am istigh!", timeUpSub: "Tá an babhta thart. Seo na freagraí.", playTitle: "Imir Wordingle", playIntro: "Lean do chosán dúshláin, nó díghlasáil saor-imirt níos déanaí.", settings: "Socruithe", settingsIntro: "Socraigh fuaim, atmaisféar agus éifeachtaí.", soundToggle: "Fuaim", continueChallenge: "Lean den dúshlán", resetChallenge: "Athshocraigh dúshlán", resetChallengeConfirm: "Athshocraigh dul chun cinn an dúshláin? Coinneofar do phróifíl, ach fillfidh an dá chosán dúshláin ar chéim a haon.", resetChallengeDone: "Athshocraíodh dul chun cinn an dúshláin.", nextChallenge: "Lean go dtí an chéad chéim eile", freePlayLocked: "Díghlasáiltear saor-imirt tar éis cosán dúshláin a chríochnú.", playerName: "Ainm imreora", music: "Atmaisféar", musicOff: "As", musicKids: "Crónán te", musicSpace: "Spás domhain", musicTechno: "Buille íseal", musicFocus: "Fócas ciúin", musicClassical: "Athshondas bog", musicFestive: "Lonrú geimhridh", musicVolume: "Airde atmaisféir", sfxVolume: "Airde éifeachtaí", level: "Leibhéal", xp: "XP", runs: "Babhtaí", profileTitle: "Próifíl imreora", profileIntro: "Do dhul chun cinn áitiúil.", totalTime: "Am iomlán", wordsSolved: "Focail réitithe", wins: "Buanna", bankProgress: "Dul chun cinn banc focal", resetConfirmOne: "Athshocraigh an phróifíl? Bainfear XP, leibhéil, staitisticí agus díghlasálacha.", resetConfirmTwo: "Deimhniú deireanach: scrios an phróifíl seo go buan?", resetProfile: "Athshocraigh", unlocked: "Díghlasáilte", lightMode: "Mód geal", best: "Is fearr", topScore: "Scór is airde", leaderboardHint: "Barr 10", leaderboardTitle: "Clár ceannais", topScoresFor: "Na scóir is fearr don socrú seo", noConfigScore: "Gan scór fós",
         title: "Wordingle", tagline: "Aimsigh focail fholaithe ar do shuaimhneas.", playStyle: "Stíl imeartha", freePlay: "Saor-imirt", challengePlay: "Dúshlán", audience: "Lucht imeartha", child: "Páiste", adultAudience: "Duine fásta", help: "Cabhair", helpTitle: "Conas imirt", helpText: "Tarraing focal chuig an gcéad tíl ina gceapann tú go dtosaíonn sé. Tuigtear an treo ón tarraingt. Is féidir le huirlisí litreacha folaithe a nochtadh. Sa mhodh dúshláin, athmheascann an ghreille tíleanna neamhghlasáilte ar chomhaireamh síos. Fanann focail aimsithe slán.", menace: "Athmheascadh", menaceOff: "As", menaceOn: "Ann", menaceEvent: "Athmheascadh! Tá an ghreille ag athrú.", reshuffleIn: "Athmheascadh i", theme: "Mód dorcha", randomTheme: "Téama randamach", giveUp: "Éirigh as", setup: "Socrú", play: "Imir",
         time: "Am", score: "Scór", clues: "Leideanna", scoreHint: "Is fearr níos airde", foundHint: "Focail réitithe",
         words: "Focail", highScores: "Scóir arda", setupTitle: "Socraigh Wordingle", setupIntro: "Roghnaigh stíl an phuzail. Glasálfar í nuair a thosaíonn an cluiche.", close: "Dún",
@@ -1563,6 +1594,7 @@
     const continueChallengeBtn = document.getElementById("continueChallengeBtn");
     const freePlayBtn = document.getElementById("freePlayBtn");
     const challengeModeBtn = document.getElementById("challengeModeBtn");
+    const resetChallengeBtn = document.getElementById("resetChallengeBtn");
     const helpModal = document.getElementById("helpModal");
     const leaderboardModal = document.getElementById("leaderboardModal");
     const confirmModal = document.getElementById("confirmModal");
@@ -1897,11 +1929,11 @@
       setupModalCard?.classList.toggle("no-profile", !hasProfile);
       setupModalCard?.classList.toggle("free-locked", !challenge && !freeUnlocked);
       if (freePlayBtn) {
-        freePlayBtn.disabled = !freeUnlocked;
-        freePlayBtn.title = freeUnlocked ? t("freePlay") : t("freePlayLocked");
+        freePlayBtn.disabled = false;
+        freePlayBtn.title = t("freePlay");
       }
       if (startGameBtn) startGameBtn.style.display = challenge ? "none" : "inline-flex";
-      if (continueChallengeBtn) continueChallengeBtn.style.display = challenge ? "inline-flex" : "none";
+      if (continueChallengeBtn) continueChallengeBtn.style.display = "inline-flex";
       if (challengeModeBtn) challengeModeBtn.style.display = challenge ? "none" : "inline-flex";
       renderChallengePath(setupChallengePathEl);
     }
@@ -1935,7 +1967,7 @@
     }
 
     function freePlayUnlocked() {
-      return challengeComplete("child") || challengeComplete("adult");
+      return true;
     }
 
     function selectedChallengeIndex(audience = audienceSelect.value || "child") {
@@ -2076,19 +2108,14 @@
     function renderProfile() {
       ensureProfileLogo();
       if (document.activeElement !== playerNameInput) playerNameInput.value = state.profile.name || "Player";
-      profileLevel.textContent = state.profile.level;
-      profileXp.textContent = state.profile.xp;
-      profileRuns.textContent = state.profile.runs;
       if (currentUserChip) currentUserChip.innerHTML = `👤 ${state.profile.name || "Player"} <small>Lv ${state.profile.level}</small>`;
       if (profileNameDisplay) profileNameDisplay.textContent = state.profile.name || "Player";
       if (profileSubtitle) profileSubtitle.textContent = `${t("level")} ${state.profile.level} · ${state.profile.xp} ${t("xp")}`;
       applyLogoToElement(profileLogo, state.profile.logo);
       renderProfileDetails();
       renderChallengePath(challengePathEl);
-      const unlockedModes = Object.keys(OPTIONS[state.lang].modes).filter(isModeUnlocked).map(m => OPTIONS[state.lang].modes[m].split(":")[0]);
-      unlockNote.textContent = `${t("unlocked")}: ${unlockedModes.join(", ")}. Nature: 2 wins · Space: level 3 · Adult: hard Kids or normal Nature · Chaos: level 5 + hard Space.`;
-      const perks = state.profile.perks?.length ? state.profile.perks : ["No perks yet"];
-      perkList.innerHTML = perks.map(p => `<span class="perk-pill">${p}</span>`).join("");
+      // Progress details are now kept in the dedicated profile modal.
+
     }
 
     function renderProfileDetails() {
@@ -3340,10 +3367,29 @@
       newGame();
     });
     freePlayBtn.addEventListener("click", () => {
-      if (!freePlayUnlocked()) return setMessage(t("freePlayLocked"));
       playStyleSelect.value = "free";
       document.body.classList.remove("challenge-aesthetic");
       applyPlayStyleVisibility();
+    });
+    resetChallengeBtn?.addEventListener("click", async () => {
+      const ok = await askConfirm({
+        title: t("resetChallenge"),
+        message: t("resetChallengeConfirm"),
+        okText: t("resetChallenge"),
+        cancelText: t("close"),
+        icon: "↺",
+        danger: true
+      });
+      if (!ok) return;
+      state.profile.challengeProgress = {};
+      state.profile.questionHistory = {};
+      delete state.profile.completed?.["challengeComplete:child"];
+      delete state.profile.completed?.["challengeComplete:adult"];
+      state.selectedChallengeIndex = null;
+      saveProfile();
+      renderChallengePath(setupChallengePathEl);
+      renderChallengePath(challengePathEl);
+      setMessage(t("resetChallengeDone"));
     });
     challengeModeBtn.addEventListener("click", () => {
       playStyleSelect.value = "challenge";
@@ -3518,7 +3564,7 @@
       console.assert(challengeLevels("adult").length === 10, "Adult challenge should have 10 stages");
       console.assert(CHALLENGE_PACKS.child.every(stage => stage.length >= 10), "Every child stage should have at least ten prompt sets");
       console.assert(CHALLENGE_PACKS.adult.every(stage => stage.length >= 10), "Every adult stage should have at least ten prompt sets");
-      console.assert(typeof freePlayUnlocked === "function", "Free play unlock helper should exist");
+      console.assert(typeof freePlayUnlocked === "function" && freePlayUnlocked(), "Free play should be unlocked for testing");
       console.assert(document.getElementById("setupModalCard"), "Setup modal card should exist");
       console.assert(typeof chunkyLockSound === "function", "Chunky lock sound should exist");
       console.assert(!("clues" in state), "Deprecated clue state should be removed");      console.assert(typeof haptic === "function", "Haptic helper should exist");
@@ -3527,6 +3573,8 @@
       console.assert(typeof askConfirm === "function", "Custom confirm modal should exist");
       console.assert(typeof selectedChallengeIndex === "function", "Challenge replay selector should exist");
       console.assert(themeModeBtn, "Theme mode toggle should exist");
+      console.assert(resetChallengeBtn, "Reset challenge button should exist");
+      console.assert(!document.documentElement.textContent.includes("$1align-content"), "Broken regex replacement tokens should not be present in CSS");
       console.assert(typeof applyMonotoneTheme === "function", "Monotone theme helper should exist");
       console.assert(typeof askGameAction === "function", "Active game action modal should exist");
       console.assert(typeof pickChallengeSet === "function", "Challenge question cycling should exist");
